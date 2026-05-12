@@ -690,29 +690,94 @@ th {
   color: var(--red);
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1120px) {
+  :root {
+    --direction-font-size: 26px;
+    --signal-direction-font-size: 28px;
+  }
+
   .workspace {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 440px auto auto;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+    grid-template-rows: auto minmax(430px, calc(100vh - 360px)) auto;
+  }
+
+  .control-panel {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(160px, 0.8fr) minmax(180px, 1fr) minmax(220px, 1.2fr);
+    align-items: end;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .button-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .metric-stack {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 0;
+  }
+
+  .metric-stack div {
+    min-height: 58px;
+    padding: 8px 10px;
+  }
+
+  .metric-stack strong {
+    font-size: 16px;
+  }
+
+  .chart-area {
+    grid-column: 1;
   }
 
   .prediction-panel {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .signal-banner {
-    grid-column: 1 / -1;
-  }
-
-  .prediction-card {
+    grid-column: 2;
     grid-template-columns: 1fr;
   }
 
+  .signal-table {
+    grid-column: 1 / -1;
+  }
+
+  .chart-header {
+    min-height: 78px;
+    padding: 14px 16px;
+  }
+
+  .chart-header strong {
+    font-size: clamp(24px, 4vw, 34px);
+  }
+
+  .prediction-card {
+    grid-template-columns: minmax(88px, 0.76fr) minmax(140px, 1.24fr);
+    gap: 10px;
+    min-height: 116px;
+    padding: 12px 10px;
+  }
+
+  .prediction-core {
+    overflow: hidden;
+  }
+
+  .prediction-card.down strong {
+    font-size: 25px;
+  }
+
+  .prediction-panel.is-all-green.signal-down .prediction-card.signal-hit strong,
+  .prediction-panel.signal-all.signal-down .prediction-card.signal-hit strong {
+    font-size: 26px;
+  }
+
   .prediction-analysis {
-    padding-left: 0;
-    padding-top: 10px;
-    border-left: 0;
-    border-top: 1px solid rgba(153, 168, 181, 0.18);
+    padding-left: 10px;
+  }
+
+  .prediction-analysis p {
+    font-size: 11px;
+    line-height: 1.45;
   }
 }
 
@@ -738,6 +803,11 @@ th {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --direction-font-size: 32px;
+    --signal-direction-font-size: 34px;
+  }
+
   .app-shell {
     padding: 12px;
   }
@@ -767,11 +837,31 @@ th {
   }
 
   .workspace {
+    grid-template-columns: 1fr;
     grid-template-rows: auto 360px auto auto;
   }
 
-  .prediction-panel {
+  .control-panel {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .metric-stack {
     grid-template-columns: 1fr;
+  }
+
+  .chart-area {
+    grid-column: 1;
+  }
+
+  .prediction-panel {
+    grid-column: 1;
+    grid-template-columns: 1fr;
+  }
+
+  .signal-table {
+    grid-column: 1;
   }
 
   .chart-header strong {
