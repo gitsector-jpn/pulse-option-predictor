@@ -33,3 +33,45 @@ http://127.0.0.1:4173/
 ## Notes
 
 This is a validation tool, not financial advice. Short-term price movement is noisy, and the app does not guarantee profit or win rate.
+
+## Static Hosting
+
+This app is a static site. It runs with:
+
+- `index.html`
+- `styles.css`
+- `app.js`
+- `favicon.svg`
+
+No build step, server runtime, database, `.env`, or API key is required.
+
+### External Data Sources
+
+- Crypto pairs use Binance public trade WebSocket streams.
+- USD/JPY uses public FX APIs with browser-side fallback.
+
+The app uses browser `fetch` and `WebSocket` only. If one FX endpoint blocks CORS or is unavailable, the app tries the next provider.
+
+### GitHub Pages
+
+Recommended for the current repository.
+
+1. Open the repository on GitHub.
+2. Go to `Settings` -> `Pages`.
+3. Set `Source` to `Deploy from a branch`.
+4. Select `main` and `/ (root)`.
+5. Save.
+
+Expected URL:
+
+```text
+https://gitsector-jpn.github.io/pulse-option-predictor/
+```
+
+### Vercel / Netlify
+
+Import the GitHub repository as a static project.
+
+- Build command: leave empty
+- Output directory: leave empty or use repository root
+- Install command: leave empty
