@@ -804,17 +804,27 @@ th {
 
 @media (max-width: 640px) {
   :root {
-    --direction-font-size: 32px;
-    --signal-direction-font-size: 34px;
+    --direction-font-size: 28px;
+    --signal-direction-font-size: 30px;
+  }
+
+  html,
+  body {
+    min-width: 0;
+    overflow-x: hidden;
   }
 
   .app-shell {
-    padding: 12px;
+    width: 100%;
+    padding: 10px;
   }
 
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+    gap: 12px;
+    min-height: auto;
+    padding-bottom: 12px;
   }
 
   .brand-lockup {
@@ -833,35 +843,98 @@ th {
   }
 
   .brand-title {
-    font-size: clamp(24px, 8vw, 34px);
+    font-size: clamp(22px, 7vw, 30px);
+  }
+
+  .status-strip {
+    min-width: 0;
+    font-size: 12px;
   }
 
   .workspace {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 360px auto auto;
+    grid-template-rows: auto minmax(340px, 52vh) auto auto;
+    gap: 10px;
   }
 
   .control-panel {
     grid-column: 1;
     display: flex;
     flex-direction: column;
+    gap: 12px;
+    padding: 12px;
   }
 
   .metric-stack {
     grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .metric-stack div {
+    min-height: 54px;
+  }
+
+  select,
+  button {
+    height: 38px;
+  }
+
+  .button-row {
+    gap: 8px;
   }
 
   .chart-area {
     grid-column: 1;
+    min-height: 340px;
   }
 
   .prediction-panel {
     grid-column: 1;
     grid-template-columns: 1fr;
+    gap: 9px;
+    padding: 10px;
+  }
+
+  .signal-banner {
+    min-height: auto;
+    padding: 10px;
+  }
+
+  .signal-banner-head {
+    align-items: flex-start;
+  }
+
+  .signal-settings-body {
+    right: auto;
+    left: 0;
+    width: min(260px, calc(100vw - 44px));
+  }
+
+  .prediction-card {
+    grid-template-columns: minmax(86px, 0.74fr) minmax(0, 1.26fr);
+    gap: 10px;
+    min-height: 112px;
+    padding: 11px 10px;
+  }
+
+  .prediction-card.down strong,
+  .prediction-panel.is-all-green.signal-down .prediction-card.signal-hit strong,
+  .prediction-panel.signal-all.signal-down .prediction-card.signal-hit strong {
+    font-size: 26px;
+  }
+
+  .prediction-analysis {
+    padding-left: 10px;
+  }
+
+  .prediction-analysis p {
+    font-size: 11px;
+    line-height: 1.45;
   }
 
   .signal-table {
     grid-column: 1;
+    min-height: 190px;
   }
 
   .chart-header strong {
@@ -870,8 +943,62 @@ th {
 
   .chart-header {
     align-items: flex-start;
-    flex-direction: column;
-    min-height: 116px;
-    padding: 14px;
+    flex-direction: row;
+    min-height: 82px;
+    padding: 12px;
+  }
+
+  .clock {
+    font-size: 11px;
+  }
+
+  canvas {
+    min-height: 258px;
+  }
+
+  .section-title {
+    padding: 11px 12px;
+  }
+
+  .table-wrap {
+    max-height: 220px;
+  }
+
+  table {
+    min-width: 520px;
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 9px 10px;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand-kicker {
+    letter-spacing: 0.16em;
+  }
+
+  .brand-title {
+    font-size: clamp(21px, 7vw, 28px);
+  }
+
+  .control-panel,
+  .chart-area,
+  .prediction-panel,
+  .signal-table {
+    border-left-color: rgba(53, 64, 74, 0.72);
+    border-right-color: rgba(53, 64, 74, 0.72);
+  }
+
+  .prediction-card {
+    grid-template-columns: minmax(78px, 0.68fr) minmax(0, 1.32fr);
+  }
+
+  .prediction-card.down strong,
+  .prediction-panel.is-all-green.signal-down .prediction-card.signal-hit strong,
+  .prediction-panel.signal-all.signal-down .prediction-card.signal-hit strong {
+    font-size: 24px;
   }
 }
