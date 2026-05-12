@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Pulse Option Predictor">
+  <defs>
+    <linearGradient id="bg" x1="10" y1="4" x2="54" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1f2b34"/>
+      <stop offset="1" stop-color="#0f1317"/>
+    </linearGradient>
+    <linearGradient id="pulse" x1="14" y1="45" x2="50" y2="19" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#35d28f"/>
+      <stop offset="1" stop-color="#5fb6ff"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <path d="M14 47H50" stroke="#35404a" stroke-width="2" stroke-linecap="round"/>
+  <path d="M14 35H50" stroke="#26313a" stroke-width="2" stroke-linecap="round"/>
+  <path d="M14 23H50" stroke="#26313a" stroke-width="2" stroke-linecap="round"/>
+
+  <path d="M15 42L24 34L31 38L40 24L49 18" fill="none" stroke="url(#pulse)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="49" cy="18" r="4" fill="#f4c95d"/>
+
+  <path d="M22 24V42" stroke="#35d28f" stroke-width="3" stroke-linecap="round"/>
+  <rect x="18" y="29" width="8" height="9" rx="2" fill="#35d28f"/>
+
+  <path d="M36 18V39" stroke="#ff5d6c" stroke-width="3" stroke-linecap="round"/>
+  <rect x="32" y="22" width="8" height="12" rx="2" fill="#ff5d6c"/>
+
+  <path d="M8 52H56" stroke="#5fb6ff" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+</svg>
