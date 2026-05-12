@@ -1,0 +1,37 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# dependencies / build output
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+tmp/
+temp/
+
+# installers / large local files
+*.exe
+*.msi
+
+# editor / OS
+.vs/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
