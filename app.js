@@ -11,6 +11,7 @@ const connectButton = $("#connectButton");
 const resetButton = $("#resetButton");
 const connectionDot = $("#connectionDot");
 const connectionText = $("#connectionText");
+const statusStrip = $(".status-strip");
 const lastPriceEl = $("#lastPrice");
 const activePriceEl = $("#activePrice");
 const activeMarketEl = $("#activeMarket");
@@ -19,6 +20,11 @@ const volatilityEl = $("#volatility");
 const clockEl = $("#clock");
 const logBody = $("#logBody");
 const accuracyEl = $("#accuracy");
+const predictionPanel = $(".prediction-panel");
+const signalTitle = $("#signalTitle");
+const signalMessage = $("#signalMessage");
+const signalThreshold = $("#signalThreshold");
+const signalThresholdValue = $("#signalThresholdValue");
 
 const horizons = [15, 30, 60];
 const horizonEls = {
@@ -45,6 +51,8 @@ let settledSignals = [];
 let lastPredictionAt = 0;
 let animationId = 0;
 let lastPrice = 0;
+let signalStateKey = "normal";
+let currentPredictions = [];
 
 function formatPrice(value) {
   if (!Number.isFinite(value)) return "--";
@@ -73,6 +81,8 @@ function resetState() {
   settledSignals = [];
   lastPredictionAt = 0;
   lastPrice = 0;
+  signalStateKey = "normal";
+  currentPredictions = [];
   logBody.textContent = "";
   accuracyEl.textContent = "的中率 --";
   lastPriceEl.textContent = "--";
@@ -82,6 +92,7 @@ function resetState() {
   for (const horizon of horizons) {
     renderPrediction(horizon, null);
   }
+  updateSignalState([]);
   drawChart();
 }
 
@@ -185,10 +196,12 @@ function ingestTick(price, timestamp) {
 
   if (timestamp - lastPredictionAt >= 1000) {
     const predictions = buildPredictions(timestamp, price);
+    currentPredictions = predictions;
     for (const prediction of predictions) {
       renderPrediction(prediction.horizon, prediction);
       pendingSignals.push(prediction);
     }
+    updateSignalState(predictions);
     lastPredictionAt = timestamp;
   }
 }
@@ -358,10 +371,18 @@ function buildPredictions(timestamp, price) {
   });
 }
 
+function displayDirection(direction) {
+  return direction;
+}
+
+function getSignalThreshold() {
+  return Number(signalThreshold.value);
+}
+
 function renderPrediction(horizon, prediction) {
   const card = document.querySelector(`[data-horizon="${horizon}"]`);
   const els = horizonEls[horizon];
-  card.classList.remove("up", "down");
+  card.classList.remove("up", "down", "signal-hit");
   if (!prediction) {
     els.dir.textContent = "--";
     els.bar.style.width = "0";
@@ -369,12 +390,84 @@ function renderPrediction(horizon, prediction) {
     els.analysis.textContent = "接続後に分析を表示します。";
     return;
   }
-  els.dir.textContent = prediction.direction;
+  els.dir.textContent = displayDirection(prediction.direction);
   els.bar.style.width = `${prediction.probability}%`;
   els.prob.textContent = `${prediction.probability}%`;
   els.analysis.textContent = prediction.analysis;
   if (prediction.direction === "UP") card.classList.add("up");
   if (prediction.direction === "DOWN") card.classList.add("down");
+  if (prediction.direction !== "WAIT" && prediction.probability >= getSignalThreshold()) {
+    card.classList.add("signal-hit");
+  }
+}
+
+function updateSignalState(predictions) {
+  const threshold = getSignalThreshold();
+  const qualified = predictions.filter(
+    (prediction) => prediction.direction !== "WAIT" && prediction.probability >= threshold,
+  );
+  const counts = qualified.reduce(
+    (acc, prediction) => {
+      acc[prediction.direction] += 1;
+      return acc;
+    },
+    { UP: 0, DOWN: 0 },
+  );
+  const direction = counts.UP >= counts.DOWN ? "UP" : "DOWN";
+  const matched = Math.max(counts.UP, counts.DOWN);
+  const label = displayDirection(direction);
+  const nextStateKey = matched >= 3 ? `all-${direction}` : matched === 2 ? `almost-${direction}` : "normal";
+  const stateChanged = nextStateKey !== signalStateKey;
+  signalStateKey = nextStateKey;
+
+  predictionPanel.classList.remove(
+    "signal-almost",
+    "signal-all",
+    "is-almost-ready",
+    "is-all-green",
+    "signal-buy",
+    "signal-down",
+    "signal-pulse",
+  );
+  statusStrip.classList.remove("live-synced");
+
+  if (matched >= 3) {
+    predictionPanel.classList.add(
+      "signal-all",
+      "is-all-green",
+      direction === "UP" ? "signal-buy" : "signal-down",
+    );
+    statusStrip.classList.add("live-synced");
+    if (stateChanged) {
+      predictionPanel.classList.add("signal-pulse");
+      window.setTimeout(() => predictionPanel.classList.remove("signal-pulse"), 2800);
+    }
+    signalTitle.textContent = "ALL GREEN";
+    signalMessage.textContent = `3つすべてが${threshold}%以上！ ${label} シグナル成立`;
+    return;
+  }
+
+  if (matched === 2) {
+    predictionPanel.classList.add(
+      "signal-almost",
+      "is-almost-ready",
+      direction === "UP" ? "signal-buy" : "signal-down",
+    );
+    signalTitle.textContent = "Almost Ready";
+    signalMessage.textContent = `2つが${threshold}%以上で${label}方向。あと1つで成立`;
+    return;
+  }
+
+  signalTitle.textContent = "Signal Standby";
+  signalMessage.textContent = "3つの時間軸が揃うと強調表示します。";
+}
+
+function refreshSignalThreshold() {
+  signalThresholdValue.textContent = `${getSignalThreshold()}%`;
+  for (const prediction of currentPredictions) {
+    renderPrediction(prediction.horizon, prediction);
+  }
+  updateSignalState(currentPredictions);
 }
 
 function settleSignals(timestamp, price) {
@@ -479,6 +572,7 @@ function loop() {
 connectButton.addEventListener("click", connect);
 resetButton.addEventListener("click", resetState);
 candleSelect.addEventListener("change", rebuildCandles);
+signalThreshold.addEventListener("input", refreshSignalThreshold);
 symbolSelect.addEventListener("change", () => {
   activeMarketEl.textContent = symbolSelect.selectedOptions[0].textContent;
   if (socket || fxTimer) connect();

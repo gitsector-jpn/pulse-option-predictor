@@ -10,10 +10,18 @@
   <body>
     <main class="app-shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Live Direction Lab</p>
-          <h1>Pulse Option Predictor</h1>
-        </div>
+        <a class="brand-lockup" href="./" aria-label="Pulse Option Predictor home">
+          <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true">
+            <rect x="6.5" y="6.5" width="31" height="31" rx="3" />
+            <path d="M12 25h5l3-10 5 20 4-14h3" />
+            <path d="M12 16h20" />
+            <path d="M12 34h20" />
+          </svg>
+          <span class="brand-text">
+            <span class="brand-kicker">Live Direction Lab</span>
+            <h1 class="brand-title">Pulse Option Predictor</h1>
+          </span>
+        </a>
         <div class="status-strip">
           <span id="connectionDot" class="dot"></span>
           <span id="connectionText">未接続</span>
@@ -85,6 +93,22 @@
         </section>
 
         <section class="prediction-panel" aria-label="方向予測">
+          <div class="signal-banner" id="signalBanner" aria-live="polite">
+            <div class="signal-banner-head">
+              <strong id="signalTitle">Signal Standby</strong>
+              <details class="signal-settings" id="signalSettings">
+                <summary>設定</summary>
+                <div class="signal-settings-body">
+                  <label for="signalThreshold">発光しきい値</label>
+                  <div class="threshold-row">
+                    <input id="signalThreshold" type="range" min="50" max="99" value="65" step="1" />
+                    <output id="signalThresholdValue" for="signalThreshold">65%</output>
+                  </div>
+                </div>
+              </details>
+            </div>
+            <span id="signalMessage">3つの時間軸が揃うと強調表示します。</span>
+          </div>
           <article class="prediction-card" data-horizon="15">
             <div class="prediction-core">
               <span class="horizon">15秒後</span>
