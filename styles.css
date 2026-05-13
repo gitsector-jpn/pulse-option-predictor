@@ -440,12 +440,28 @@ canvas {
     inset 0 0 22px rgba(53, 210, 143, 0.06);
 }
 
+.prediction-panel.is-all-red {
+  border-color: rgba(255, 93, 108, 0.72);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 93, 108, 0.12), transparent 40%),
+    var(--surface);
+  box-shadow:
+    0 0 0 1px rgba(255, 93, 108, 0.34),
+    0 0 20px rgba(255, 93, 108, 0.24),
+    inset 0 0 22px rgba(255, 93, 108, 0.07);
+}
+
 .prediction-panel.signal-pulse {
   animation: signalBloom 2.6s ease-out;
 }
 
+.prediction-panel.is-all-red.signal-pulse {
+  animation: signalBloomRed 2.6s ease-out;
+}
+
 .prediction-panel.signal-all::after,
-.prediction-panel.is-all-green::after {
+.prediction-panel.is-all-green::after,
+.prediction-panel.is-all-red::after {
   content: "";
   position: absolute;
   inset: 5px;
@@ -455,23 +471,45 @@ canvas {
   box-shadow: inset 0 0 22px rgba(53, 210, 143, 0.14);
 }
 
+.prediction-panel.is-all-red::after {
+  border-color: rgba(244, 201, 93, 0.14);
+  box-shadow: inset 0 0 22px rgba(255, 93, 108, 0.14);
+}
+
 .prediction-panel.signal-almost .signal-banner,
 .prediction-panel.is-almost-ready .signal-banner,
 .prediction-panel.signal-all .signal-banner,
-.prediction-panel.is-all-green .signal-banner {
+.prediction-panel.is-all-green .signal-banner,
+.prediction-panel.is-all-red .signal-banner {
   border-color: rgba(53, 210, 143, 0.32);
   background: rgba(20, 30, 24, 0.78);
 }
 
+.prediction-panel.is-all-red .signal-banner {
+  border-color: rgba(255, 93, 108, 0.36);
+  background: rgba(31, 20, 24, 0.82);
+}
+
 .prediction-panel.signal-all .signal-banner strong,
-.prediction-panel.is-all-green .signal-banner strong {
+.prediction-panel.is-all-green .signal-banner strong,
+.prediction-panel.is-all-red .signal-banner strong {
   color: #dfffe8;
   text-shadow: 0 0 10px rgba(53, 210, 143, 0.72);
 }
 
+.prediction-panel.is-all-red .signal-banner strong {
+  color: #ffe5e9;
+  text-shadow: 0 0 10px rgba(255, 93, 108, 0.68);
+}
+
 .prediction-panel.signal-all .signal-banner span,
-.prediction-panel.is-all-green .signal-banner span {
+.prediction-panel.is-all-green .signal-banner span,
+.prediction-panel.is-all-red .signal-banner span {
   color: #bff7d4;
+}
+
+.prediction-panel.is-all-red .signal-banner span {
+  color: #ffc5ce;
 }
 
 .prediction-card {
@@ -534,13 +572,15 @@ canvas {
 }
 
 .prediction-panel.signal-all.signal-down .prediction-card.signal-hit,
-.prediction-panel.is-all-green.signal-down .prediction-card.signal-hit {
+.prediction-panel.is-all-green.signal-down .prediction-card.signal-hit,
+.prediction-panel.is-all-red.signal-down .prediction-card.signal-hit {
   border-color: rgba(255, 93, 108, 0.42);
   background: rgba(32, 21, 25, 0.78);
 }
 
 .prediction-panel.signal-all.signal-down .prediction-card.signal-hit strong,
-.prediction-panel.is-all-green.signal-down .prediction-card.signal-hit strong {
+.prediction-panel.is-all-green.signal-down .prediction-card.signal-hit strong,
+.prediction-panel.is-all-red.signal-down .prediction-card.signal-hit strong {
   text-shadow:
     0 0 9px rgba(255, 93, 108, 0.78),
     0 0 18px rgba(255, 93, 108, 0.3);
@@ -582,6 +622,10 @@ canvas {
   background: linear-gradient(90deg, var(--gold), #7dff93);
 }
 
+.prediction-panel.is-all-red .prob-bar span {
+  background: linear-gradient(90deg, var(--gold), #ff7380);
+}
+
 @keyframes signalBloom {
   0% {
     box-shadow:
@@ -602,6 +646,30 @@ canvas {
       0 0 0 1px rgba(111, 255, 127, 0.32),
       0 0 20px rgba(53, 210, 143, 0.24),
       inset 0 0 22px rgba(53, 210, 143, 0.06);
+    filter: brightness(1);
+  }
+}
+
+@keyframes signalBloomRed {
+  0% {
+    box-shadow:
+      0 0 0 1px rgba(255, 93, 108, 0.82),
+      0 0 62px rgba(255, 93, 108, 0.58),
+      inset 0 0 44px rgba(255, 93, 108, 0.17);
+    filter: brightness(1.2);
+  }
+  38% {
+    box-shadow:
+      0 0 0 1px rgba(255, 93, 108, 0.52),
+      0 0 34px rgba(255, 93, 108, 0.34),
+      inset 0 0 28px rgba(255, 93, 108, 0.1);
+    filter: brightness(1.08);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 93, 108, 0.34),
+      0 0 20px rgba(255, 93, 108, 0.24),
+      inset 0 0 22px rgba(255, 93, 108, 0.07);
     filter: brightness(1);
   }
 }
@@ -786,6 +854,7 @@ th {
   .prediction-panel.signal-almost,
   .prediction-panel.is-almost-ready,
   .prediction-panel.signal-pulse,
+  .prediction-panel.is-all-red.signal-pulse,
   .status-strip.live-synced .dot.live,
   .prediction-card strong,
   .prob-bar span {
@@ -798,6 +867,10 @@ th {
   }
 
   .prediction-panel.is-all-green .prediction-card.signal-hit strong {
+    transform: none;
+  }
+
+  .prediction-panel.is-all-red .prediction-card.signal-hit strong {
     transform: none;
   }
 }
@@ -919,6 +992,7 @@ th {
 
   .prediction-card.down strong,
   .prediction-panel.is-all-green.signal-down .prediction-card.signal-hit strong,
+  .prediction-panel.is-all-red.signal-down .prediction-card.signal-hit strong,
   .prediction-panel.signal-all.signal-down .prediction-card.signal-hit strong {
     font-size: 26px;
   }
@@ -998,6 +1072,7 @@ th {
 
   .prediction-card.down strong,
   .prediction-panel.is-all-green.signal-down .prediction-card.signal-hit strong,
+  .prediction-panel.is-all-red.signal-down .prediction-card.signal-hit strong,
   .prediction-panel.signal-all.signal-down .prediction-card.signal-hit strong {
     font-size: 24px;
   }

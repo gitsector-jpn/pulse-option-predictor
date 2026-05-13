@@ -425,24 +425,28 @@ function updateSignalState(predictions) {
     "signal-all",
     "is-almost-ready",
     "is-all-green",
+    "is-all-red",
     "signal-buy",
     "signal-down",
+    "signal-red",
     "signal-pulse",
   );
   statusStrip.classList.remove("live-synced");
 
   if (matched >= 3) {
+    const allStateClass = direction === "UP" ? "is-all-green" : "is-all-red";
     predictionPanel.classList.add(
       "signal-all",
-      "is-all-green",
+      allStateClass,
       direction === "UP" ? "signal-buy" : "signal-down",
+      direction === "DOWN" ? "signal-red" : "signal-buy",
     );
     statusStrip.classList.add("live-synced");
     if (stateChanged) {
       predictionPanel.classList.add("signal-pulse");
       window.setTimeout(() => predictionPanel.classList.remove("signal-pulse"), 2800);
     }
-    signalTitle.textContent = "ALL GREEN";
+    signalTitle.textContent = direction === "UP" ? "ALL GREEN" : "ALL RED";
     signalMessage.textContent = `3つすべてが${threshold}%以上！ ${label} シグナル成立`;
     return;
   }
