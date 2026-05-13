@@ -12,7 +12,6 @@ Live direction lab for short-horizon chart observation.
 ## Markets
 
 - BTC/USDT, ETH/USDT, SOL/USDT, XRP/USDT, BNB/USDT: Binance trade WebSocket
-- USD/JPY: public FX rate API polling with fallback providers
 
 ## Run
 
@@ -48,9 +47,8 @@ No build step, server runtime, database, `.env`, or API key is required.
 ### External Data Sources
 
 - Crypto pairs use Binance public trade WebSocket streams.
-- USD/JPY uses public FX APIs with browser-side fallback.
 
-The app uses browser `fetch` and `WebSocket` only. If one FX endpoint blocks CORS or is unavailable, the app tries the next provider.
+The app uses the browser `WebSocket` API only. No API key or backend server is required.
 
 ### GitHub Pages
 

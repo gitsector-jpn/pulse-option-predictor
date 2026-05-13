@@ -727,13 +727,18 @@ canvas {
 }
 
 .table-wrap {
-  max-height: 260px;
-  overflow: auto;
+  --log-header-height: 42px;
+  --log-row-height: 42px;
+  height: calc(var(--log-header-height) + (var(--log-row-height) * 5));
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 13px;
 }
 
@@ -746,8 +751,21 @@ td {
 }
 
 th {
+  height: var(--log-header-height, 42px);
   color: var(--muted);
   font-weight: 600;
+}
+
+td {
+  height: var(--log-row-height, 42px);
+}
+
+.signal-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: rgba(17, 23, 28, 0.98);
+  box-shadow: 0 1px 0 rgba(153, 168, 181, 0.16);
 }
 
 .win {
@@ -1035,7 +1053,8 @@ th {
   }
 
   .table-wrap {
-    max-height: 220px;
+    --log-header-height: 40px;
+    --log-row-height: 40px;
   }
 
   table {

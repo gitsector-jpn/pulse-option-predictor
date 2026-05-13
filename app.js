@@ -34,16 +34,17 @@ const horizonEls = {
 };
 
 const markets = {
-  btcusdt: { type: "binance", stream: "btcusdt" },
-  ethusdt: { type: "binance", stream: "ethusdt" },
-  solusdt: { type: "binance", stream: "solusdt" },
-  xrpusdt: { type: "binance", stream: "xrpusdt" },
-  bnbusdt: { type: "binance", stream: "bnbusdt" },
-  usdjpy: { type: "fx", base: "USD", quote: "JPY", pollMs: 5000 },
+  btcusdt: { stream: "btcusdt" },
+  ethusdt: { stream: "ethusdt" },
+  solusdt: { stream: "solusdt" },
+  xrpusdt: { stream: "xrpusdt" },
+  bnbusdt: { stream: "bnbusdt" },
 };
 
 let socket = null;
-let fxTimer = 0;
+let reconnectTimer = 0;
+let activeConnectionId = 0;
+let manualDisconnect = false;
 let ticks = [];
 let candles = [];
 let pendingSignals = [];
@@ -97,23 +98,38 @@ function resetState() {
 }
 
 function connect() {
-  disconnect();
+  disconnect({ preserveStatus: true });
   resetState();
+  manualDisconnect = false;
+  activeConnectionId += 1;
+  const connectionId = activeConnectionId;
   const market = markets[symbolSelect.value];
   const label = symbolSelect.selectedOptions[0].textContent;
   activeMarketEl.textContent = label;
   setConnection("", "接続中");
 
-  if (market.type === "fx") {
-    connectFx(market);
-    return;
-  }
-
-  socket = new WebSocket(`wss://stream.binance.com:9443/ws/${market.stream}@trade`);
-  socket.addEventListener("open", () => setConnection("live", "ライブ"));
-  socket.addEventListener("close", () => setConnection("", "切断"));
-  socket.addEventListener("error", () => setConnection("error", "エラー"));
-  socket.addEventListener("message", (event) => {
+  const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${market.stream}@trade`);
+  socket = ws;
+  ws.addEventListener("open", () => {
+    if (connectionId !== activeConnectionId || socket !== ws) return;
+    setConnection("live", "ライブ");
+  });
+  ws.addEventListener("close", () => {
+    if (connectionId !== activeConnectionId || socket !== ws) return;
+    socket = null;
+    if (manualDisconnect) {
+      setConnection("", "切断");
+      return;
+    }
+    setConnection("", "再接続中");
+    scheduleReconnect(connectionId);
+  });
+  ws.addEventListener("error", () => {
+    if (connectionId !== activeConnectionId || socket !== ws) return;
+    setConnection("error", "接続エラー");
+  });
+  ws.addEventListener("message", (event) => {
+    if (connectionId !== activeConnectionId || socket !== ws) return;
     const trade = JSON.parse(event.data);
     const price = Number(trade.p);
     const timestamp = Number(trade.T) || Date.now();
@@ -121,67 +137,27 @@ function connect() {
   });
 }
 
-function disconnect() {
-  if (fxTimer) {
-    clearInterval(fxTimer);
-    fxTimer = 0;
+function disconnect(options = {}) {
+  manualDisconnect = true;
+  activeConnectionId += 1;
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = 0;
   }
   if (socket) {
     socket.close();
     socket = null;
   }
+  if (!options.preserveStatus) setConnection("", "切断");
 }
 
-async function connectFx(market) {
-  const poll = async () => {
-    try {
-      const rate = await fetchFxRate(market.base, market.quote);
-      ingestTick(rate, Date.now());
-      setConnection("live", "FXライブ");
-    } catch (error) {
-      console.error(error);
-      setConnection("error", "FX取得エラー");
-    }
-  };
-
-  await poll();
-  fxTimer = window.setInterval(poll, market.pollMs);
-}
-
-async function fetchFxRate(base, quote) {
-  const providers = [
-    async () => {
-      const response = await fetch(`https://fxapi.app/api/${base}/${quote}.json`, { cache: "no-store" });
-      if (!response.ok) throw new Error("fxapi failed");
-      const data = await response.json();
-      return Number(data.rate);
-    },
-    async () => {
-      const response = await fetch("https://convertz.app/api/currency", { cache: "no-store" });
-      if (!response.ok) throw new Error("convertz failed");
-      const data = await response.json();
-      if (base !== "USD") throw new Error("convertz supports USD base in this app");
-      return Number(data.rates?.[quote]);
-    },
-    async () => {
-      const response = await fetch(`https://api.frankfurter.dev/v1/latest?base=${base}&symbols=${quote}`, {
-        cache: "no-store",
-      });
-      if (!response.ok) throw new Error("frankfurter failed");
-      const data = await response.json();
-      return Number(data.rates?.[quote]);
-    },
-  ];
-
-  for (const provider of providers) {
-    try {
-      const rate = await provider();
-      if (Number.isFinite(rate) && rate > 0) return rate;
-    } catch {
-      // Try the next public endpoint. Browser CORS and provider uptime vary.
-    }
-  }
-  throw new Error(`${base}/${quote} rate unavailable`);
+function scheduleReconnect(connectionId) {
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  reconnectTimer = window.setTimeout(() => {
+    if (connectionId !== activeConnectionId || manualDisconnect) return;
+    reconnectTimer = 0;
+    connect();
+  }, 1500);
 }
 
 function ingestTick(price, timestamp) {
@@ -579,7 +555,7 @@ candleSelect.addEventListener("change", rebuildCandles);
 signalThreshold.addEventListener("input", refreshSignalThreshold);
 symbolSelect.addEventListener("change", () => {
   activeMarketEl.textContent = symbolSelect.selectedOptions[0].textContent;
-  if (socket || fxTimer) connect();
+  if (socket) connect();
 });
 
 window.addEventListener("beforeunload", () => {
