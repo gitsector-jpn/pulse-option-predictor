@@ -55,6 +55,13 @@ let lastPrice = 0;
 let signalStateKey = "normal";
 let currentPredictions = [];
 
+const signalTitleTooltips = {
+  standby: "3つの時間軸がまだ強く揃っていない待機状態です。",
+  green: "3つの時間軸が上方向で揃った状態です。強いUPシグナルとして表示します。",
+  red: "3つの時間軸が下方向で揃った状態です。強いDOWNシグナルとして表示します。",
+  almost: "3つの時間軸のうち2つが同じ方向で強まりつつある予兆状態です。",
+};
+
 function formatPrice(value) {
   if (!Number.isFinite(value)) return "--";
   if (value >= 1000) return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
@@ -73,6 +80,12 @@ function formatTime(timestamp = Date.now()) {
 function setConnection(state, text) {
   connectionDot.className = `dot ${state}`;
   connectionText.textContent = text;
+}
+
+function prepareTooltips() {
+  document.querySelectorAll("[data-tooltip]").forEach((element) => {
+    if (!element.hasAttribute("tabindex")) element.tabIndex = 0;
+  });
 }
 
 function resetState() {
@@ -423,6 +436,7 @@ function updateSignalState(predictions) {
       window.setTimeout(() => predictionPanel.classList.remove("signal-pulse"), 2800);
     }
     signalTitle.textContent = direction === "UP" ? "ALL GREEN" : "ALL RED";
+    signalTitle.dataset.tooltip = direction === "UP" ? signalTitleTooltips.green : signalTitleTooltips.red;
     signalMessage.textContent = `3つすべてが${threshold}%以上！ ${label} シグナル成立`;
     return;
   }
@@ -434,11 +448,13 @@ function updateSignalState(predictions) {
       direction === "UP" ? "signal-buy" : "signal-down",
     );
     signalTitle.textContent = "Almost Ready";
+    signalTitle.dataset.tooltip = signalTitleTooltips.almost;
     signalMessage.textContent = `2つが${threshold}%以上で${label}方向。あと1つで成立`;
     return;
   }
 
   signalTitle.textContent = "Signal Standby";
+  signalTitle.dataset.tooltip = signalTitleTooltips.standby;
   signalMessage.textContent = "3つの時間軸が揃うと強調表示します。";
 }
 
@@ -563,5 +579,6 @@ window.addEventListener("beforeunload", () => {
   cancelAnimationFrame(animationId);
 });
 
+prepareTooltips();
 resetState();
 loop();

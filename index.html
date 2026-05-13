@@ -31,7 +31,7 @@
       <section class="workspace">
         <aside class="control-panel">
           <label class="field">
-            <span>銘柄</span>
+            <span data-tooltip="表示・判定に使用する取引ペアです。暗号資産のリアルタイム価格を参照します。">銘柄</span>
             <select id="symbolSelect">
               <option value="btcusdt">BTC/USDT</option>
               <option value="ethusdt">ETH/USDT</option>
@@ -42,7 +42,7 @@
           </label>
 
           <label class="field">
-            <span>足間隔</span>
+            <span data-tooltip="チャートに表示するローソク足の更新間隔です。短いほど細かい値動きを確認できます。">足間隔</span>
             <select id="candleSelect">
               <option value="1">1秒</option>
               <option value="5" selected>5秒</option>
@@ -51,7 +51,7 @@
           </label>
 
           <div class="field">
-            <span>感度</span>
+            <span data-tooltip="シグナル判定の反応強度です。高くすると短期変動に反応しやすくなります。">感度</span>
             <input id="sensitivity" type="range" min="0.7" max="1.8" value="1.15" step="0.05" />
           </div>
 
@@ -62,15 +62,15 @@
 
           <div class="metric-stack">
             <div>
-              <span>現在値</span>
+              <span data-tooltip="選択中の銘柄の最新価格です。">現在値</span>
               <strong id="lastPrice">--</strong>
             </div>
             <div>
-              <span>1分変化</span>
+              <span data-tooltip="直近1分間の価格変化率です。短期の勢いを見る目安になります。">1分変化</span>
               <strong id="minuteChange">--</strong>
             </div>
             <div>
-              <span>推定ボラ</span>
+              <span data-tooltip="直近の値動きから推定した変動幅です。相場の荒さを見る補助指標です。">推定ボラ</span>
               <strong id="volatility">--</strong>
             </div>
           </div>
@@ -94,7 +94,7 @@
         <section class="prediction-panel" aria-label="方向予測">
           <div class="signal-banner" id="signalBanner" aria-live="polite">
             <div class="signal-banner-head">
-              <strong id="signalTitle">Signal Standby</strong>
+              <strong id="signalTitle" data-tooltip="3つの時間軸がまだ強く揃っていない待機状態です。">Signal Standby</strong>
               <details class="signal-settings" id="signalSettings">
                 <summary>設定</summary>
                 <div class="signal-settings-body">
@@ -110,37 +110,37 @@
           </div>
           <article class="prediction-card" data-horizon="15">
             <div class="prediction-core">
-              <span class="horizon">15秒後</span>
+              <span class="horizon" data-tooltip="15秒後の方向予測です。ごく短期の勢いを確認します。">15秒後</span>
               <strong id="dir15">--</strong>
               <div class="prob-bar"><span id="bar15"></span></div>
-              <small id="prob15">--</small>
+              <small id="prob15" data-tooltip="現在の条件から算出した方向予測の信頼度目安です。必ず的中する保証ではありません。">--</small>
             </div>
             <div class="prediction-analysis">
-              <span>判断基準</span>
+              <span data-tooltip="EMA、RSI、ボラティリティなどから算出した判断理由です。">判断基準</span>
               <p id="analysis15">接続後に分析を表示します。</p>
             </div>
           </article>
           <article class="prediction-card" data-horizon="30">
             <div class="prediction-core">
-              <span class="horizon">30秒後</span>
+              <span class="horizon" data-tooltip="30秒後の方向予測です。短期から中期寄りの勢いを比較します。">30秒後</span>
               <strong id="dir30">--</strong>
               <div class="prob-bar"><span id="bar30"></span></div>
-              <small id="prob30">--</small>
+              <small id="prob30" data-tooltip="現在の条件から算出した方向予測の信頼度目安です。必ず的中する保証ではありません。">--</small>
             </div>
             <div class="prediction-analysis">
-              <span>判断基準</span>
+              <span data-tooltip="EMA、RSI、ボラティリティなどから算出した判断理由です。">判断基準</span>
               <p id="analysis30">接続後に分析を表示します。</p>
             </div>
           </article>
           <article class="prediction-card" data-horizon="60">
             <div class="prediction-core">
-              <span class="horizon">1分後</span>
+              <span class="horizon" data-tooltip="1分後の方向予測です。短期より少し長めの勢いを確認します。">1分後</span>
               <strong id="dir60">--</strong>
               <div class="prob-bar"><span id="bar60"></span></div>
-              <small id="prob60">--</small>
+              <small id="prob60" data-tooltip="現在の条件から算出した方向予測の信頼度目安です。必ず的中する保証ではありません。">--</small>
             </div>
             <div class="prediction-analysis">
-              <span>判断基準</span>
+              <span data-tooltip="EMA、RSI、ボラティリティなどから算出した判断理由です。">判断基準</span>
               <p id="analysis60">接続後に分析を表示します。</p>
             </div>
           </article>
@@ -148,8 +148,8 @@
 
         <section class="signal-table" aria-label="検証ログ">
           <div class="section-title">
-            <h2>検証ログ</h2>
-            <span id="accuracy">的中率 --</span>
+            <h2 data-tooltip="過去の予測と実際の結果を記録します。短期的な精度確認に使います。">検証ログ</h2>
+            <span id="accuracy" class="tooltip-left" data-tooltip="検証ログ上での予測的中割合です。市場環境によって変動します。">的中率 --</span>
           </div>
           <div class="table-wrap">
             <table>
@@ -158,7 +158,7 @@
                   <th>時刻</th>
                   <th>期限</th>
                   <th>予測</th>
-                  <th>確率</th>
+                  <th data-tooltip="現在の条件から算出した方向予測の信頼度目安です。必ず的中する保証ではありません。">確率</th>
                   <th>結果</th>
                 </tr>
               </thead>
