@@ -58,6 +58,8 @@ let lastPrice = 0;
 let signalStateKey = "normal";
 let currentPredictions = [];
 let signalAudioReady = false;
+let previewTimer = 0;
+let previewActive = false;
 
 const signalSoundStorageKey = "pulse-option-signal-sound";
 const signalSoundDebug = true;
@@ -73,6 +75,14 @@ const signalTitleTooltips = {
   red: "3つの時間軸が下方向で揃った状態です。強いDOWNシグナルとして表示します。",
   almost: "3つの時間軸のうち2つが同じ方向で強まりつつある予兆状態です。",
 };
+
+const signalTiers = [
+  { key: "extreme", label: "Extreme Signal", min: 90 },
+  { key: "very-strong", label: "Very Strong", min: 80 },
+  { key: "strong", label: "Strong Signal", min: 70 },
+];
+
+const previewDurationMs = 3600;
 
 function formatPrice(value) {
   if (!Number.isFinite(value)) return "--";
@@ -366,6 +376,92 @@ function directionWord(value, upWord, downWord, flatWord = "横ばい") {
   return value > 0 ? upWord : downWord;
 }
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function average(values) {
+  if (!values.length) return 0;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function analyzeCandles(directionSign) {
+  const recent = candles.slice(-5);
+  if (recent.length < 3) {
+    return {
+      continuity: 0,
+      bodyStrength: 0,
+      wickRisk: 0.35,
+    };
+  }
+
+  let aligned = 0;
+  const bodyRatios = [];
+  const wickRisks = [];
+
+  for (const candle of recent) {
+    const range = Math.max(candle.high - candle.low, candle.close * 0.000001);
+    const body = Math.abs(candle.close - candle.open);
+    const candleSign = candle.close >= candle.open ? 1 : -1;
+    if (candleSign === directionSign && body / range > 0.18) aligned += 1;
+    bodyRatios.push(clamp(body / range, 0, 1));
+
+    const upperWick = candle.high - Math.max(candle.open, candle.close);
+    const lowerWick = Math.min(candle.open, candle.close) - candle.low;
+    const opposingWick = directionSign > 0 ? upperWick : lowerWick;
+    wickRisks.push(clamp(opposingWick / range, 0, 1));
+  }
+
+  return {
+    continuity: aligned / recent.length,
+    bodyStrength: average(bodyRatios),
+    wickRisk: average(wickRisks),
+  };
+}
+
+function calculateConditionQuality(directionSign, factors) {
+  const candleProfile = analyzeCandles(directionSign);
+  const emaDistance = clamp(Math.abs(factors.trend) / (factors.vol * 2.8), 0, 1);
+  const rsiDirection = directionSign > 0 ? factors.rsiSlope : -factors.rsiSlope;
+  const rsiAlignment = clamp((rsiDirection + 2.5) / 7.5, 0, 1);
+  const volStability = clamp(1 - Math.abs(factors.shortVol / factors.longVol - 1), 0, 1);
+  const suddenMoveRisk = clamp((factors.lastMove / (factors.vol * 2.8) - 1) / 1.6, 0, 1);
+
+  const positive =
+    candleProfile.continuity * 0.24 +
+    candleProfile.bodyStrength * 0.18 +
+    emaDistance * 0.2 +
+    rsiAlignment * 0.16 +
+    volStability * 0.14 +
+    (1 - candleProfile.wickRisk) * 0.08;
+  const penalty = candleProfile.wickRisk * 0.18 + suddenMoveRisk * 0.2 + (1 - volStability) * 0.1;
+
+  return {
+    quality: clamp(positive - penalty, 0, 1),
+    candleProfile,
+    emaDistance,
+    rsiAlignment,
+    volStability,
+    suddenMoveRisk,
+  };
+}
+
+function scoreAgreement(predictions) {
+  const actionable = predictions.filter((prediction) => prediction.direction !== "WAIT");
+  if (actionable.length < 3) return { aligned: false, bonus: 0 };
+  const sameDirection = actionable.every((prediction) => prediction.direction === actionable[0].direction);
+  if (!sameDirection) return { aligned: false, bonus: 0 };
+
+  const strengths = actionable.map((prediction) => Math.abs(prediction.score));
+  const mean = average(strengths);
+  const dispersion = average(strengths.map((strength) => Math.abs(strength - mean)));
+  const consistency = clamp(1 - dispersion / Math.max(mean, 0.01), 0, 1);
+  return {
+    aligned: true,
+    bonus: Math.round(consistency * clamp((mean - 0.75) / 1.15, 0, 1) * 7),
+  };
+}
+
 function buildAnalysis(horizon, direction, probability, factors) {
   if (!factors.ready) {
     return `データ蓄積中です。最低45tick集まるまでは、短期ノイズを避けるためWAITにしています。現在${factors.samples}tick。`;
@@ -375,14 +471,32 @@ function buildAnalysis(horizon, direction, probability, factors) {
   const shortMomentum = directionWord(factors.momentum15, "買い優勢", "売り優勢", "勢い薄め");
   const midMomentum = directionWord(factors.momentum45, "上昇寄り", "下落寄り", "中立");
   const rsiText = factors.rsiValue >= 58 ? "買われ気味" : factors.rsiValue <= 42 ? "売られ気味" : "中立圏";
-  const confidence = probability >= 64 ? "やや強め" : probability >= 57 ? "中程度" : "弱め";
+  const rsiSlopeText = directionWord(factors.rsiSlope / 100, "上向き", "下向き", "横ばい");
+  const candleText = factors.condition
+    ? `連続性${Math.round(factors.condition.candleProfile.continuity * 100)}%、実体${Math.round(factors.condition.candleProfile.bodyStrength * 100)}%、ヒゲリスク${Math.round(factors.condition.candleProfile.wickRisk * 100)}%`
+    : "";
+  const stabilityText = factors.condition ? `ボラ安定${Math.round(factors.condition.volStability * 100)}%` : "";
+  const tier = getPredictionTier(probability);
+  const confidence =
+    tier.key === "extreme"
+      ? "例外的に強い条件一致"
+      : tier.key === "very-strong"
+        ? "かなり強い条件一致"
+        : tier.key === "strong"
+          ? "強い条件一致"
+          : probability >= 62
+            ? "やや強め"
+            : probability >= 57
+              ? "中程度"
+              : "弱め";
   const horizonNote = horizon === 15 ? "直近の勢いを重視。" : horizon === 30 ? "直近要因を少し減衰。" : "時間が長いので確信度を控えめに補正。";
 
   if (direction === "WAIT") {
-    return `EMAは${trendText}、短期は${shortMomentum}、45tickは${midMomentum}。RSI ${factors.rsiValue.toFixed(1)}で${rsiText}ですが、優位性が小さいため見送り。`;
+    return `EMAは${trendText}、短期は${shortMomentum}、45tickは${midMomentum}。RSI ${factors.rsiValue.toFixed(1)}で${rsiText}、変化は${rsiSlopeText}。優位性が小さいため見送り。`;
   }
 
-  return `EMAは${trendText}、短期は${shortMomentum}(${describePercent(factors.momentum15)})、45tickは${midMomentum}。RSI ${factors.rsiValue.toFixed(1)}、ボラ${(factors.vol * 100).toFixed(3)}%。確信度は${confidence}。${horizonNote}`;
+  const alignmentText = factors.scoreAligned ? "3軸スコア一致。" : "";
+  return `EMAは${trendText}、短期は${shortMomentum}(${describePercent(factors.momentum15)})、45tickは${midMomentum}。RSI ${factors.rsiValue.toFixed(1)}は${rsiSlopeText}。${candleText}、${stabilityText}。${alignmentText}条件一致度は${confidence}。${horizonNote}`;
 }
 
 function buildPredictions(timestamp, price) {
@@ -405,10 +519,15 @@ function buildPredictions(timestamp, price) {
   const momentum15 = (price - prices[Math.max(0, prices.length - 15)]) / price;
   const momentum45 = (price - prices[Math.max(0, prices.length - 45)]) / price;
   const rsiValue = rsi(prices, 14);
+  const previousRsiValue = rsi(prices.slice(0, -8), 14);
   const returns = getReturns(90);
   const vol = Math.max(standardDeviation(returns), 0.00008);
+  const shortVol = Math.max(standardDeviation(returns.slice(-18)), 0.00008);
+  const longVol = Math.max(standardDeviation(returns.slice(-70)), 0.00008);
+  const lastMove = Math.abs(returns.at(-1) || 0);
   const trend = (fast - slow) / price;
   const rsiPressure = (rsiValue - 50) / 50;
+  const rsiSlope = rsiValue - previousRsiValue;
   const rawScore = trend * 8 + momentum15 * 6 + momentum45 * 4 + rsiPressure * vol * 1.8;
   const sampleConfidence = Math.min(1, Math.max(0.35, prices.length / 150));
   const tunedScore = Math.max(-2.2, Math.min(2.2, (rawScore / vol) * Number(sensitivity.value) * sampleConfidence));
@@ -419,15 +538,25 @@ function buildPredictions(timestamp, price) {
     momentum15,
     momentum45,
     rsiValue,
+    rsiSlope,
     vol,
+    shortVol,
+    longVol,
+    lastMove,
   };
 
-  return horizons.map((horizon) => {
+  const predictions = horizons.map((horizon) => {
     const decay = horizon === 15 ? 1 : horizon === 30 ? 0.78 : 0.58;
     const score = tunedScore * decay;
-    const edge = Math.min(18, Math.abs(score) * 8);
+    const directionSign = score >= 0 ? 1 : -1;
+    const condition = calculateConditionQuality(directionSign, factors);
+    const scorePower = clamp((Math.abs(score) - 0.65) / 1.35, 0, 1);
+    const baseEdge = Math.min(16, Math.abs(score) * 6.2);
+    const qualityEdge = condition.quality * scorePower * 22;
+    const riskPenalty = condition.suddenMoveRisk * 8 + condition.candleProfile.wickRisk * 5;
+    const edge = clamp(baseEdge + qualityEdge - riskPenalty, 0, 42);
     const probability = Math.round(50 + edge);
-    const direction = probability < 54 ? "WAIT" : score >= 0 ? "UP" : "DOWN";
+    const direction = probability < 55 ? "WAIT" : score >= 0 ? "UP" : "DOWN";
     return {
       horizon,
       timestamp,
@@ -436,13 +565,40 @@ function buildPredictions(timestamp, price) {
       direction,
       probability,
       score,
-      analysis: buildAnalysis(horizon, direction, probability, factors),
+      condition,
+      analysis: buildAnalysis(horizon, direction, probability, { ...factors, condition }),
+    };
+  });
+
+  const agreement = scoreAgreement(predictions);
+  return predictions.map((prediction) => {
+    if (!agreement.aligned || prediction.direction === "WAIT") return prediction;
+    const probability = Math.min(92, prediction.probability + agreement.bonus);
+    return {
+      ...prediction,
+      probability,
+      analysis: buildAnalysis(prediction.horizon, prediction.direction, probability, {
+        ...factors,
+        condition: prediction.condition,
+        scoreAligned: agreement.aligned,
+      }),
     };
   });
 }
 
 function displayDirection(direction) {
   return direction;
+}
+
+function getPredictionTier(probability) {
+  return signalTiers.find((tier) => probability >= tier.min) || { key: "base", label: "Signal", min: 0 };
+}
+
+function getSignalTier(predictions, direction) {
+  const aligned = predictions.filter((prediction) => prediction.direction === direction);
+  const strength = aligned.length ? Math.max(...aligned.map((prediction) => prediction.probability)) : 0;
+  const tier = getPredictionTier(strength);
+  return { ...tier, strength };
 }
 
 function getSignalThreshold() {
@@ -452,7 +608,7 @@ function getSignalThreshold() {
 function renderPrediction(horizon, prediction) {
   const card = document.querySelector(`[data-horizon="${horizon}"]`);
   const els = horizonEls[horizon];
-  card.classList.remove("up", "down", "signal-hit");
+  card.classList.remove("up", "down", "signal-hit", "tier-strong", "tier-very-strong", "tier-extreme");
   if (!prediction) {
     els.dir.textContent = "--";
     els.bar.style.width = "0";
@@ -462,16 +618,21 @@ function renderPrediction(horizon, prediction) {
   }
   els.dir.textContent = displayDirection(prediction.direction);
   els.bar.style.width = `${prediction.probability}%`;
-  els.prob.textContent = `${prediction.probability}%`;
+  const tier = getPredictionTier(prediction.probability);
+  els.prob.textContent = tier.key === "base" ? `${prediction.probability}%` : `${prediction.probability}% · ${tier.label}`;
   els.analysis.textContent = prediction.analysis;
   if (prediction.direction === "UP") card.classList.add("up");
   if (prediction.direction === "DOWN") card.classList.add("down");
+  card.classList.toggle("tier-strong", tier.key === "strong");
+  card.classList.toggle("tier-very-strong", tier.key === "very-strong");
+  card.classList.toggle("tier-extreme", tier.key === "extreme");
   if (prediction.direction !== "WAIT" && prediction.probability >= getSignalThreshold()) {
     card.classList.add("signal-hit");
   }
 }
 
 function updateSignalState(predictions) {
+  if (previewActive) return;
   const threshold = getSignalThreshold();
   const qualified = predictions.filter(
     (prediction) => prediction.direction !== "WAIT" && prediction.probability >= threshold,
@@ -486,22 +647,12 @@ function updateSignalState(predictions) {
   const direction = counts.UP >= counts.DOWN ? "UP" : "DOWN";
   const matched = Math.max(counts.UP, counts.DOWN);
   const label = displayDirection(direction);
+  const signalTier = getSignalTier(predictions, direction);
   const nextStateKey = matched >= 3 ? `all-${direction}` : matched === 2 ? `almost-${direction}` : "normal";
   const stateChanged = nextStateKey !== signalStateKey;
   signalStateKey = nextStateKey;
 
-  predictionPanel.classList.remove(
-    "signal-almost",
-    "signal-all",
-    "is-almost-ready",
-    "is-all-green",
-    "is-all-red",
-    "signal-buy",
-    "signal-down",
-    "signal-red",
-    "signal-pulse",
-  );
-  statusStrip.classList.remove("live-synced");
+  clearSignalClasses();
 
   if (matched >= 3) {
     const allStateClass = direction === "UP" ? "is-all-green" : "is-all-red";
@@ -511,6 +662,7 @@ function updateSignalState(predictions) {
       direction === "UP" ? "signal-buy" : "signal-down",
       direction === "DOWN" ? "signal-red" : "signal-buy",
     );
+    if (signalTier.key !== "base") predictionPanel.classList.add(`tier-${signalTier.key}`);
     statusStrip.classList.add("live-synced");
     if (stateChanged) {
       predictionPanel.classList.add("signal-pulse");
@@ -520,7 +672,8 @@ function updateSignalState(predictions) {
     }
     signalTitle.textContent = direction === "UP" ? "ALL GREEN" : "ALL RED";
     signalTitle.dataset.tooltip = direction === "UP" ? signalTitleTooltips.green : signalTitleTooltips.red;
-    signalMessage.textContent = `3つすべてが${threshold}%以上！ ${label} シグナル成立`;
+    const tierLabel = signalTier.key === "base" ? "Signal" : signalTier.label;
+    signalMessage.textContent = `3つすべてが${threshold}%以上！ ${label} / ${tierLabel} ${signalTier.strength}%`;
     return;
   }
 
@@ -539,6 +692,58 @@ function updateSignalState(predictions) {
   signalTitle.textContent = "Signal Standby";
   signalTitle.dataset.tooltip = signalTitleTooltips.standby;
   signalMessage.textContent = "3つの時間軸が揃うと強調表示します。";
+}
+
+function clearSignalClasses() {
+  predictionPanel.classList.remove(
+    "signal-almost",
+    "signal-all",
+    "is-almost-ready",
+    "is-all-green",
+    "is-all-red",
+    "signal-buy",
+    "signal-down",
+    "signal-red",
+    "signal-pulse",
+    "tier-strong",
+    "tier-very-strong",
+    "tier-extreme",
+    "is-preview",
+  );
+  statusStrip.classList.remove("live-synced");
+}
+
+function previewSignal(direction, probability) {
+  const tier = getPredictionTier(probability);
+  const allStateClass = direction === "UP" ? "is-all-green" : "is-all-red";
+  const label = direction === "UP" ? "ALL GREEN" : "ALL RED";
+  const display = displayDirection(direction);
+
+  if (previewTimer) window.clearTimeout(previewTimer);
+  previewActive = true;
+  clearSignalClasses();
+  predictionPanel.classList.add(
+    "is-preview",
+    "signal-all",
+    allStateClass,
+    direction === "UP" ? "signal-buy" : "signal-down",
+    direction === "DOWN" ? "signal-red" : "signal-buy",
+    "signal-pulse",
+  );
+  if (tier.key !== "base") predictionPanel.classList.add(`tier-${tier.key}`);
+  statusStrip.classList.add("live-synced");
+  window.setTimeout(() => predictionPanel.classList.remove("signal-pulse"), 2600);
+
+  signalTitle.textContent = label;
+  signalTitle.dataset.tooltip = direction === "UP" ? signalTitleTooltips.green : signalTitleTooltips.red;
+  signalMessage.textContent = `DEMO MODE / ${display} / ${tier.label} ${probability}%`;
+  playSignalSound(direction, { force: true });
+
+  previewTimer = window.setTimeout(() => {
+    previewActive = false;
+    clearSignalClasses();
+    updateSignalState(currentPredictions);
+  }, previewDurationMs);
 }
 
 function refreshSignalThreshold() {
@@ -667,6 +872,12 @@ signalSoundTestGreen?.addEventListener("click", async () => {
 signalSoundTestRed?.addEventListener("click", async () => {
   await unlockSignalAudio();
   playSignalSound("DOWN", { force: true });
+});
+document.querySelectorAll("[data-preview-signal]").forEach((button) => {
+  button.addEventListener("click", async () => {
+    await unlockSignalAudio();
+    previewSignal(button.dataset.previewSignal, Number(button.dataset.previewTier));
+  });
 });
 symbolSelect.addEventListener("change", () => {
   activeMarketEl.textContent = symbolSelect.selectedOptions[0].textContent;

@@ -527,6 +527,49 @@ canvas {
   font-weight: 700;
 }
 
+.signal-preview {
+  display: grid;
+  gap: 7px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(153, 168, 181, 0.12);
+}
+
+.signal-preview > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.preview-grid button {
+  height: 26px;
+  border-radius: 5px;
+  color: #cbd6df;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.prediction-panel.is-preview .signal-banner {
+  border-color: rgba(95, 182, 255, 0.36);
+}
+
+.prediction-panel.is-preview .signal-banner strong::before {
+  content: "PREVIEW";
+  display: block;
+  margin-bottom: 4px;
+  color: var(--cyan);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-shadow: 0 0 8px rgba(95, 182, 255, 0.22);
+}
+
 .prediction-panel.signal-almost,
 .prediction-panel.is-almost-ready {
   border-color: rgba(53, 210, 143, 0.34);
@@ -565,6 +608,50 @@ canvas {
 
 .prediction-panel.is-all-red.signal-pulse {
   animation: signalBloomRed 2.6s ease-out;
+}
+
+.prediction-panel.tier-strong {
+  box-shadow:
+    0 0 0 1px rgba(111, 255, 127, 0.28),
+    0 0 22px rgba(53, 210, 143, 0.2),
+    inset 0 0 22px rgba(53, 210, 143, 0.06);
+}
+
+.prediction-panel.tier-very-strong {
+  box-shadow:
+    0 0 0 1px rgba(111, 255, 127, 0.4),
+    0 0 30px rgba(53, 210, 143, 0.28),
+    inset 0 0 28px rgba(53, 210, 143, 0.08);
+}
+
+.prediction-panel.tier-extreme {
+  box-shadow:
+    0 0 0 1px rgba(111, 255, 127, 0.5),
+    0 0 38px rgba(53, 210, 143, 0.34),
+    inset 0 0 34px rgba(53, 210, 143, 0.1);
+  animation: tierPulse 2.8s ease-in-out infinite;
+}
+
+.prediction-panel.is-all-red.tier-strong {
+  box-shadow:
+    0 0 0 1px rgba(255, 93, 108, 0.28),
+    0 0 22px rgba(255, 93, 108, 0.18),
+    inset 0 0 22px rgba(255, 93, 108, 0.06);
+}
+
+.prediction-panel.is-all-red.tier-very-strong {
+  box-shadow:
+    0 0 0 1px rgba(255, 93, 108, 0.4),
+    0 0 30px rgba(255, 93, 108, 0.26),
+    inset 0 0 28px rgba(255, 93, 108, 0.08);
+}
+
+.prediction-panel.is-all-red.tier-extreme {
+  box-shadow:
+    0 0 0 1px rgba(255, 93, 108, 0.5),
+    0 0 38px rgba(255, 93, 108, 0.32),
+    inset 0 0 34px rgba(255, 93, 108, 0.1);
+  animation: tierPulseRed 2.8s ease-in-out infinite;
 }
 
 .prediction-panel.signal-all::after,
@@ -661,6 +748,20 @@ canvas {
 
 .prediction-card.signal-hit {
   border-color: rgba(53, 210, 143, 0.34);
+}
+
+.prediction-card.tier-strong {
+  border-color: rgba(95, 182, 255, 0.32);
+}
+
+.prediction-card.tier-very-strong {
+  border-color: rgba(244, 201, 93, 0.34);
+  box-shadow: inset 0 0 16px rgba(244, 201, 93, 0.05);
+}
+
+.prediction-card.tier-extreme {
+  border-color: rgba(244, 201, 93, 0.46);
+  box-shadow: inset 0 0 20px rgba(244, 201, 93, 0.08);
 }
 
 .prediction-panel.signal-all .prediction-card.signal-hit,
@@ -807,6 +908,26 @@ canvas {
     box-shadow:
       0 0 0 3px rgba(53, 210, 143, 0.08),
       0 0 20px rgba(53, 210, 143, 0.86);
+  }
+}
+
+@keyframes tierPulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.07);
+  }
+}
+
+@keyframes tierPulseRed {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.06);
   }
 }
 
