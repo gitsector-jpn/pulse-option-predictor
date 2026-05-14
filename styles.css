@@ -664,55 +664,7 @@ canvas {
   pointer-events: none;
   border-radius: 5px;
   padding: 2px;
-  opacity: 0.88;
-  background:
-    conic-gradient(
-      from var(--spark-angle, 0deg),
-      transparent 0deg,
-      transparent 42deg,
-      rgba(175, 255, 212, 0.95) 43.4deg,
-      rgba(76, 255, 158, 1) 44.2deg,
-      rgba(76, 255, 158, 0.24) 45.6deg,
-      transparent 49deg,
-      transparent 360deg
-    );
-  filter:
-    drop-shadow(0 0 3px rgba(175, 255, 212, 0.72))
-    drop-shadow(0 0 9px rgba(53, 210, 143, 0.34));
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  animation: sparkOrbit 6.6s linear infinite;
-}
-
-.prediction-panel.tier-very-strong::before {
-  opacity: 0.94;
-  background:
-    conic-gradient(
-      from var(--spark-angle, 0deg),
-      transparent 0deg,
-      transparent 26deg,
-      rgba(175, 255, 212, 0.9) 27deg,
-      rgba(76, 255, 158, 1) 28deg,
-      rgba(76, 255, 158, 0.14) 30deg,
-      transparent 34deg,
-      transparent 150deg,
-      rgba(180, 243, 255, 0.72) 157deg,
-      rgba(95, 182, 255, 0.9) 158deg,
-      rgba(95, 182, 255, 0.12) 160deg,
-      transparent 165deg,
-      transparent 360deg
-    );
-  animation-duration: 5.2s;
-}
-
-.prediction-panel.tier-extreme::before {
-  opacity: 1;
+  opacity: 0.98;
   background:
     conic-gradient(
       from var(--spark-angle, 0deg),
@@ -735,47 +687,96 @@ canvas {
       transparent 295deg,
       transparent 360deg
     );
+  filter:
+    drop-shadow(0 0 3px rgba(175, 255, 212, 0.72))
+    drop-shadow(0 0 10px rgba(53, 210, 143, 0.42));
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  animation: sparkOrbit 5.2s linear infinite;
+}
+
+.prediction-panel.tier-very-strong::before {
+  opacity: 1;
+  background:
+    conic-gradient(
+      from var(--spark-angle, 0deg),
+      transparent 0deg,
+      rgba(190, 255, 218, 1) 14deg,
+      rgba(76, 255, 158, 1) 15deg,
+      rgba(76, 255, 158, 0.18) 18deg,
+      transparent 23deg,
+      transparent 58deg,
+      rgba(169, 255, 197, 0.78) 64deg,
+      rgba(76, 255, 158, 1) 65deg,
+      transparent 70deg,
+      transparent 136deg,
+      rgba(180, 243, 255, 0.76) 143deg,
+      rgba(95, 182, 255, 0.92) 144deg,
+      transparent 150deg,
+      transparent 226deg,
+      rgba(76, 255, 158, 0.78) 232deg,
+      rgba(190, 255, 218, 0.94) 233deg,
+      transparent 239deg,
+      transparent 304deg,
+      rgba(95, 182, 255, 0.64) 310deg,
+      transparent 316deg,
+      transparent 360deg
+    );
+  filter:
+    drop-shadow(0 0 4px rgba(175, 255, 212, 0.86))
+    drop-shadow(0 0 13px rgba(53, 210, 143, 0.48));
   animation-duration: 4.4s;
+}
+
+.prediction-panel.tier-extreme::before {
+  opacity: 1;
+  background:
+    conic-gradient(
+      from var(--spark-angle, 0deg),
+      transparent 0deg,
+      rgba(215, 255, 232, 1) 9deg,
+      rgba(76, 255, 158, 1) 10deg,
+      rgba(76, 255, 158, 0.2) 13deg,
+      transparent 18deg,
+      transparent 42deg,
+      rgba(169, 255, 197, 0.9) 48deg,
+      rgba(76, 255, 158, 1) 49deg,
+      transparent 55deg,
+      transparent 82deg,
+      rgba(180, 243, 255, 0.78) 88deg,
+      rgba(95, 182, 255, 0.96) 89deg,
+      transparent 95deg,
+      transparent 142deg,
+      rgba(76, 255, 158, 0.86) 148deg,
+      rgba(215, 255, 232, 0.96) 149deg,
+      transparent 155deg,
+      transparent 198deg,
+      rgba(180, 243, 255, 0.72) 204deg,
+      rgba(95, 182, 255, 0.88) 205deg,
+      transparent 211deg,
+      transparent 260deg,
+      rgba(76, 255, 158, 0.82) 266deg,
+      rgba(190, 255, 218, 0.96) 267deg,
+      transparent 273deg,
+      transparent 320deg,
+      rgba(76, 255, 158, 0.72) 326deg,
+      transparent 333deg,
+      transparent 360deg
+    );
+  filter:
+    drop-shadow(0 0 5px rgba(175, 255, 212, 0.95))
+    drop-shadow(0 0 17px rgba(53, 210, 143, 0.56));
+  animation-duration: 3.7s;
 }
 
 .prediction-panel.is-all-red.tier-strong::before,
 .prediction-panel.is-all-red.tier-very-strong::before,
-.prediction-panel.is-all-red.tier-extreme::before {
-  background:
-    conic-gradient(
-      from var(--spark-angle, 0deg),
-      transparent 0deg,
-      transparent 42deg,
-      rgba(255, 205, 164, 0.9) 43.4deg,
-      rgba(255, 104, 88, 1) 44.2deg,
-      rgba(255, 104, 88, 0.18) 45.6deg,
-      transparent 49deg,
-      transparent 360deg
-    );
-  filter:
-    drop-shadow(0 0 3px rgba(255, 205, 164, 0.68))
-    drop-shadow(0 0 9px rgba(255, 93, 108, 0.34));
-}
-
-.prediction-panel.is-all-red.tier-very-strong::before {
-  background:
-    conic-gradient(
-      from var(--spark-angle, 0deg),
-      transparent 0deg,
-      transparent 26deg,
-      rgba(255, 205, 164, 0.84) 27deg,
-      rgba(255, 104, 88, 1) 28deg,
-      rgba(255, 104, 88, 0.14) 30deg,
-      transparent 34deg,
-      transparent 150deg,
-      rgba(255, 160, 94, 0.72) 157deg,
-      rgba(255, 104, 88, 0.9) 158deg,
-      rgba(255, 160, 94, 0.1) 160deg,
-      transparent 165deg,
-      transparent 360deg
-    );
-}
-
 .prediction-panel.is-all-red.tier-extreme::before {
   background:
     conic-gradient(
@@ -799,6 +800,79 @@ canvas {
       transparent 295deg,
       transparent 360deg
     );
+  filter:
+    drop-shadow(0 0 3px rgba(255, 205, 164, 0.68))
+    drop-shadow(0 0 10px rgba(255, 93, 108, 0.42));
+}
+
+.prediction-panel.is-all-red.tier-very-strong::before {
+  background:
+    conic-gradient(
+      from var(--spark-angle, 0deg),
+      transparent 0deg,
+      rgba(255, 205, 164, 0.94) 14deg,
+      rgba(255, 104, 88, 1) 15deg,
+      rgba(255, 104, 88, 0.18) 18deg,
+      transparent 23deg,
+      transparent 58deg,
+      rgba(255, 160, 94, 0.78) 64deg,
+      rgba(255, 104, 88, 1) 65deg,
+      transparent 70deg,
+      transparent 136deg,
+      rgba(255, 205, 164, 0.72) 143deg,
+      rgba(255, 104, 88, 0.92) 144deg,
+      transparent 150deg,
+      transparent 226deg,
+      rgba(255, 160, 94, 0.78) 232deg,
+      rgba(255, 205, 164, 0.9) 233deg,
+      transparent 239deg,
+      transparent 304deg,
+      rgba(255, 104, 88, 0.64) 310deg,
+      transparent 316deg,
+      transparent 360deg
+    );
+  filter:
+    drop-shadow(0 0 4px rgba(255, 205, 164, 0.82))
+    drop-shadow(0 0 13px rgba(255, 93, 108, 0.48));
+}
+
+.prediction-panel.is-all-red.tier-extreme::before {
+  background:
+    conic-gradient(
+      from var(--spark-angle, 0deg),
+      transparent 0deg,
+      rgba(255, 220, 174, 1) 9deg,
+      rgba(255, 104, 88, 1) 10deg,
+      rgba(255, 104, 88, 0.2) 13deg,
+      transparent 18deg,
+      transparent 42deg,
+      rgba(255, 160, 94, 0.9) 48deg,
+      rgba(255, 104, 88, 1) 49deg,
+      transparent 55deg,
+      transparent 82deg,
+      rgba(255, 205, 164, 0.78) 88deg,
+      rgba(255, 104, 88, 0.96) 89deg,
+      transparent 95deg,
+      transparent 142deg,
+      rgba(255, 160, 94, 0.86) 148deg,
+      rgba(255, 220, 174, 0.96) 149deg,
+      transparent 155deg,
+      transparent 198deg,
+      rgba(255, 205, 164, 0.72) 204deg,
+      rgba(255, 104, 88, 0.88) 205deg,
+      transparent 211deg,
+      transparent 260deg,
+      rgba(255, 160, 94, 0.82) 266deg,
+      rgba(255, 205, 164, 0.96) 267deg,
+      transparent 273deg,
+      transparent 320deg,
+      rgba(255, 104, 88, 0.72) 326deg,
+      transparent 333deg,
+      transparent 360deg
+    );
+  filter:
+    drop-shadow(0 0 5px rgba(255, 205, 164, 0.92))
+    drop-shadow(0 0 17px rgba(255, 93, 108, 0.56));
 }
 
 .prediction-panel.signal-all::after,
@@ -816,6 +890,138 @@ canvas {
 .prediction-panel.is-all-red::after {
   border-color: rgba(244, 201, 93, 0.14);
   box-shadow: inset 0 0 22px rgba(255, 93, 108, 0.14);
+}
+
+.prediction-panel.tier-very-strong::after,
+.prediction-panel.tier-extreme::after {
+  inset: 1px;
+  padding: 1px;
+  border: 0;
+  background:
+    conic-gradient(
+      from var(--outer-spark-angle, 0deg),
+      transparent 0deg,
+      transparent 36deg,
+      rgba(95, 182, 255, 0.46) 42deg,
+      rgba(76, 255, 158, 0.94) 43deg,
+      transparent 49deg,
+      transparent 126deg,
+      rgba(175, 255, 212, 0.62) 132deg,
+      rgba(76, 255, 158, 0.9) 133deg,
+      transparent 139deg,
+      transparent 232deg,
+      rgba(95, 182, 255, 0.42) 238deg,
+      rgba(76, 255, 158, 0.82) 239deg,
+      transparent 245deg,
+      transparent 360deg
+    );
+  box-shadow: none;
+  filter:
+    drop-shadow(0 0 4px rgba(175, 255, 212, 0.68))
+    drop-shadow(0 0 12px rgba(53, 210, 143, 0.28));
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  animation: outerSparkOrbit 6.8s linear infinite;
+}
+
+.prediction-panel.tier-extreme::after {
+  padding: 2px;
+  background:
+    conic-gradient(
+      from var(--outer-spark-angle, 0deg),
+      transparent 0deg,
+      rgba(175, 255, 212, 0.74) 15deg,
+      rgba(76, 255, 158, 1) 16deg,
+      transparent 22deg,
+      transparent 54deg,
+      rgba(95, 182, 255, 0.54) 60deg,
+      rgba(76, 255, 158, 0.96) 61deg,
+      transparent 67deg,
+      transparent 112deg,
+      rgba(175, 255, 212, 0.7) 118deg,
+      rgba(76, 255, 158, 0.98) 119deg,
+      transparent 125deg,
+      transparent 184deg,
+      rgba(95, 182, 255, 0.48) 190deg,
+      rgba(76, 255, 158, 0.9) 191deg,
+      transparent 198deg,
+      transparent 254deg,
+      rgba(175, 255, 212, 0.66) 260deg,
+      rgba(76, 255, 158, 0.94) 261deg,
+      transparent 268deg,
+      transparent 318deg,
+      rgba(95, 182, 255, 0.42) 324deg,
+      transparent 332deg,
+      transparent 360deg
+    );
+  filter:
+    drop-shadow(0 0 5px rgba(175, 255, 212, 0.82))
+    drop-shadow(0 0 16px rgba(53, 210, 143, 0.36));
+  animation-duration: 5.4s;
+}
+
+.prediction-panel.is-all-red.tier-very-strong::after {
+  background:
+    conic-gradient(
+      from var(--outer-spark-angle, 0deg),
+      transparent 0deg,
+      transparent 36deg,
+      rgba(255, 160, 94, 0.5) 42deg,
+      rgba(255, 104, 88, 0.94) 43deg,
+      transparent 49deg,
+      transparent 126deg,
+      rgba(255, 205, 164, 0.6) 132deg,
+      rgba(255, 104, 88, 0.88) 133deg,
+      transparent 139deg,
+      transparent 232deg,
+      rgba(255, 160, 94, 0.42) 238deg,
+      rgba(255, 104, 88, 0.82) 239deg,
+      transparent 245deg,
+      transparent 360deg
+    );
+  filter:
+    drop-shadow(0 0 4px rgba(255, 205, 164, 0.66))
+    drop-shadow(0 0 12px rgba(255, 93, 108, 0.28));
+}
+
+.prediction-panel.is-all-red.tier-extreme::after {
+  background:
+    conic-gradient(
+      from var(--outer-spark-angle, 0deg),
+      transparent 0deg,
+      rgba(255, 205, 164, 0.72) 15deg,
+      rgba(255, 104, 88, 1) 16deg,
+      transparent 22deg,
+      transparent 54deg,
+      rgba(255, 160, 94, 0.58) 60deg,
+      rgba(255, 104, 88, 0.96) 61deg,
+      transparent 67deg,
+      transparent 112deg,
+      rgba(255, 205, 164, 0.7) 118deg,
+      rgba(255, 104, 88, 0.98) 119deg,
+      transparent 125deg,
+      transparent 184deg,
+      rgba(255, 160, 94, 0.5) 190deg,
+      rgba(255, 104, 88, 0.9) 191deg,
+      transparent 198deg,
+      transparent 254deg,
+      rgba(255, 205, 164, 0.64) 260deg,
+      rgba(255, 104, 88, 0.94) 261deg,
+      transparent 268deg,
+      transparent 318deg,
+      rgba(255, 160, 94, 0.42) 324deg,
+      transparent 332deg,
+      transparent 360deg
+    );
+  filter:
+    drop-shadow(0 0 5px rgba(255, 205, 164, 0.78))
+    drop-shadow(0 0 16px rgba(255, 93, 108, 0.36));
 }
 
 .prediction-panel.signal-almost .signal-banner,
@@ -1127,9 +1333,21 @@ canvas {
   initial-value: 0deg;
 }
 
+@property --outer-spark-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 @keyframes sparkOrbit {
   to {
     --spark-angle: 360deg;
+  }
+}
+
+@keyframes outerSparkOrbit {
+  to {
+    --outer-spark-angle: -360deg;
   }
 }
 
@@ -1312,6 +1530,8 @@ td {
   .prediction-panel.tier-strong::before,
   .prediction-panel.tier-very-strong::before,
   .prediction-panel.tier-extreme::before,
+  .prediction-panel.tier-very-strong::after,
+  .prediction-panel.tier-extreme::after,
   .status-strip.live-synced .dot.live,
   .prediction-card strong,
   .prob-bar span {
