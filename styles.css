@@ -654,6 +654,133 @@ canvas {
   animation: tierPulseRed 2.8s ease-in-out infinite;
 }
 
+.prediction-panel.tier-strong::before,
+.prediction-panel.tier-very-strong::before,
+.prediction-panel.tier-extreme::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 5px;
+  padding: 1px;
+  opacity: 0.72;
+  background:
+    conic-gradient(
+      from var(--spark-angle, 0deg),
+      transparent 0deg,
+      transparent 38deg,
+      rgba(76, 255, 158, 0.9) 44deg,
+      rgba(76, 255, 158, 0.1) 50deg,
+      transparent 58deg,
+      transparent 360deg
+    );
+  filter: drop-shadow(0 0 7px rgba(53, 210, 143, 0.42));
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  animation: sparkOrbit 5.8s linear infinite;
+}
+
+.prediction-panel.tier-very-strong::before {
+  opacity: 0.86;
+  background:
+    conic-gradient(
+      from var(--spark-angle, 0deg),
+      transparent 0deg,
+      rgba(76, 255, 158, 0.78) 28deg,
+      rgba(76, 255, 158, 0.08) 36deg,
+      transparent 48deg,
+      transparent 150deg,
+      rgba(95, 182, 255, 0.72) 158deg,
+      rgba(95, 182, 255, 0.08) 166deg,
+      transparent 180deg,
+      transparent 360deg
+    );
+  animation-duration: 4.8s;
+}
+
+.prediction-panel.tier-extreme::before {
+  opacity: 0.95;
+  background:
+    conic-gradient(
+      from var(--spark-angle, 0deg),
+      transparent 0deg,
+      rgba(76, 255, 158, 0.95) 18deg,
+      rgba(76, 255, 158, 0.12) 26deg,
+      transparent 38deg,
+      transparent 82deg,
+      rgba(169, 255, 197, 0.62) 90deg,
+      transparent 100deg,
+      transparent 178deg,
+      rgba(95, 182, 255, 0.75) 186deg,
+      transparent 198deg,
+      transparent 282deg,
+      rgba(76, 255, 158, 0.68) 290deg,
+      transparent 302deg,
+      transparent 360deg
+    );
+  animation-duration: 3.9s;
+}
+
+.prediction-panel.is-all-red.tier-strong::before,
+.prediction-panel.is-all-red.tier-very-strong::before,
+.prediction-panel.is-all-red.tier-extreme::before {
+  background:
+    conic-gradient(
+      from var(--spark-angle, 0deg),
+      transparent 0deg,
+      transparent 38deg,
+      rgba(255, 104, 88, 0.92) 44deg,
+      rgba(255, 104, 88, 0.12) 50deg,
+      transparent 58deg,
+      transparent 360deg
+    );
+  filter: drop-shadow(0 0 7px rgba(255, 93, 108, 0.4));
+}
+
+.prediction-panel.is-all-red.tier-very-strong::before {
+  background:
+    conic-gradient(
+      from var(--spark-angle, 0deg),
+      transparent 0deg,
+      rgba(255, 104, 88, 0.82) 28deg,
+      rgba(255, 104, 88, 0.1) 36deg,
+      transparent 48deg,
+      transparent 150deg,
+      rgba(255, 160, 94, 0.72) 158deg,
+      rgba(255, 160, 94, 0.08) 166deg,
+      transparent 180deg,
+      transparent 360deg
+    );
+}
+
+.prediction-panel.is-all-red.tier-extreme::before {
+  background:
+    conic-gradient(
+      from var(--spark-angle, 0deg),
+      transparent 0deg,
+      rgba(255, 104, 88, 0.96) 18deg,
+      rgba(255, 104, 88, 0.12) 26deg,
+      transparent 38deg,
+      transparent 82deg,
+      rgba(255, 160, 94, 0.62) 90deg,
+      transparent 100deg,
+      transparent 178deg,
+      rgba(255, 104, 88, 0.78) 186deg,
+      transparent 198deg,
+      transparent 282deg,
+      rgba(255, 160, 94, 0.68) 290deg,
+      transparent 302deg,
+      transparent 360deg
+    );
+}
+
 .prediction-panel.signal-all::after,
 .prediction-panel.is-all-green::after,
 .prediction-panel.is-all-red::after {
@@ -974,6 +1101,18 @@ canvas {
   }
 }
 
+@property --spark-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes sparkOrbit {
+  to {
+    --spark-angle: 360deg;
+  }
+}
+
 .signal-table {
   grid-column: 1 / -1;
   min-height: 220px;
@@ -1150,6 +1289,9 @@ td {
   .prediction-panel.is-almost-ready,
   .prediction-panel.signal-pulse,
   .prediction-panel.is-all-red.signal-pulse,
+  .prediction-panel.tier-strong::before,
+  .prediction-panel.tier-very-strong::before,
+  .prediction-panel.tier-extreme::before,
   .status-strip.live-synced .dot.live,
   .prediction-card strong,
   .prob-bar span {
