@@ -663,19 +663,22 @@ canvas {
   z-index: 1;
   pointer-events: none;
   border-radius: 5px;
-  padding: 1px;
-  opacity: 0.72;
+  padding: 2px;
+  opacity: 0.88;
   background:
     conic-gradient(
       from var(--spark-angle, 0deg),
       transparent 0deg,
-      transparent 38deg,
-      rgba(76, 255, 158, 0.9) 44deg,
-      rgba(76, 255, 158, 0.1) 50deg,
-      transparent 58deg,
+      transparent 42deg,
+      rgba(175, 255, 212, 0.95) 43.4deg,
+      rgba(76, 255, 158, 1) 44.2deg,
+      rgba(76, 255, 158, 0.24) 45.6deg,
+      transparent 49deg,
       transparent 360deg
     );
-  filter: drop-shadow(0 0 7px rgba(53, 210, 143, 0.42));
+  filter:
+    drop-shadow(0 0 3px rgba(175, 255, 212, 0.72))
+    drop-shadow(0 0 9px rgba(53, 210, 143, 0.34));
   mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -684,48 +687,55 @@ canvas {
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
-  animation: sparkOrbit 5.8s linear infinite;
+  animation: sparkOrbit 6.6s linear infinite;
 }
 
 .prediction-panel.tier-very-strong::before {
-  opacity: 0.86;
+  opacity: 0.94;
   background:
     conic-gradient(
       from var(--spark-angle, 0deg),
       transparent 0deg,
-      rgba(76, 255, 158, 0.78) 28deg,
-      rgba(76, 255, 158, 0.08) 36deg,
-      transparent 48deg,
+      transparent 26deg,
+      rgba(175, 255, 212, 0.9) 27deg,
+      rgba(76, 255, 158, 1) 28deg,
+      rgba(76, 255, 158, 0.14) 30deg,
+      transparent 34deg,
       transparent 150deg,
-      rgba(95, 182, 255, 0.72) 158deg,
-      rgba(95, 182, 255, 0.08) 166deg,
-      transparent 180deg,
+      rgba(180, 243, 255, 0.72) 157deg,
+      rgba(95, 182, 255, 0.9) 158deg,
+      rgba(95, 182, 255, 0.12) 160deg,
+      transparent 165deg,
       transparent 360deg
     );
-  animation-duration: 4.8s;
+  animation-duration: 5.2s;
 }
 
 .prediction-panel.tier-extreme::before {
-  opacity: 0.95;
+  opacity: 1;
   background:
     conic-gradient(
       from var(--spark-angle, 0deg),
       transparent 0deg,
-      rgba(76, 255, 158, 0.95) 18deg,
-      rgba(76, 255, 158, 0.12) 26deg,
-      transparent 38deg,
+      rgba(190, 255, 218, 0.95) 17deg,
+      rgba(76, 255, 158, 1) 18deg,
+      rgba(76, 255, 158, 0.16) 20deg,
+      transparent 24deg,
       transparent 82deg,
-      rgba(169, 255, 197, 0.62) 90deg,
-      transparent 100deg,
+      rgba(169, 255, 197, 0.72) 89deg,
+      rgba(76, 255, 158, 0.94) 90deg,
+      transparent 94deg,
       transparent 178deg,
-      rgba(95, 182, 255, 0.75) 186deg,
-      transparent 198deg,
+      rgba(180, 243, 255, 0.72) 185deg,
+      rgba(95, 182, 255, 0.86) 186deg,
+      transparent 191deg,
       transparent 282deg,
-      rgba(76, 255, 158, 0.68) 290deg,
-      transparent 302deg,
+      rgba(76, 255, 158, 0.72) 289deg,
+      rgba(190, 255, 218, 0.92) 290deg,
+      transparent 295deg,
       transparent 360deg
     );
-  animation-duration: 3.9s;
+  animation-duration: 4.4s;
 }
 
 .prediction-panel.is-all-red.tier-strong::before,
@@ -735,13 +745,16 @@ canvas {
     conic-gradient(
       from var(--spark-angle, 0deg),
       transparent 0deg,
-      transparent 38deg,
-      rgba(255, 104, 88, 0.92) 44deg,
-      rgba(255, 104, 88, 0.12) 50deg,
-      transparent 58deg,
+      transparent 42deg,
+      rgba(255, 205, 164, 0.9) 43.4deg,
+      rgba(255, 104, 88, 1) 44.2deg,
+      rgba(255, 104, 88, 0.18) 45.6deg,
+      transparent 49deg,
       transparent 360deg
     );
-  filter: drop-shadow(0 0 7px rgba(255, 93, 108, 0.4));
+  filter:
+    drop-shadow(0 0 3px rgba(255, 205, 164, 0.68))
+    drop-shadow(0 0 9px rgba(255, 93, 108, 0.34));
 }
 
 .prediction-panel.is-all-red.tier-very-strong::before {
@@ -749,13 +762,16 @@ canvas {
     conic-gradient(
       from var(--spark-angle, 0deg),
       transparent 0deg,
-      rgba(255, 104, 88, 0.82) 28deg,
-      rgba(255, 104, 88, 0.1) 36deg,
-      transparent 48deg,
+      transparent 26deg,
+      rgba(255, 205, 164, 0.84) 27deg,
+      rgba(255, 104, 88, 1) 28deg,
+      rgba(255, 104, 88, 0.14) 30deg,
+      transparent 34deg,
       transparent 150deg,
-      rgba(255, 160, 94, 0.72) 158deg,
-      rgba(255, 160, 94, 0.08) 166deg,
-      transparent 180deg,
+      rgba(255, 160, 94, 0.72) 157deg,
+      rgba(255, 104, 88, 0.9) 158deg,
+      rgba(255, 160, 94, 0.1) 160deg,
+      transparent 165deg,
       transparent 360deg
     );
 }
@@ -765,18 +781,22 @@ canvas {
     conic-gradient(
       from var(--spark-angle, 0deg),
       transparent 0deg,
-      rgba(255, 104, 88, 0.96) 18deg,
-      rgba(255, 104, 88, 0.12) 26deg,
-      transparent 38deg,
+      rgba(255, 205, 164, 0.9) 17deg,
+      rgba(255, 104, 88, 1) 18deg,
+      rgba(255, 104, 88, 0.16) 20deg,
+      transparent 24deg,
       transparent 82deg,
-      rgba(255, 160, 94, 0.62) 90deg,
-      transparent 100deg,
+      rgba(255, 160, 94, 0.72) 89deg,
+      rgba(255, 104, 88, 0.94) 90deg,
+      transparent 94deg,
       transparent 178deg,
-      rgba(255, 104, 88, 0.78) 186deg,
-      transparent 198deg,
+      rgba(255, 205, 164, 0.68) 185deg,
+      rgba(255, 104, 88, 0.86) 186deg,
+      transparent 191deg,
       transparent 282deg,
-      rgba(255, 160, 94, 0.68) 290deg,
-      transparent 302deg,
+      rgba(255, 160, 94, 0.72) 289deg,
+      rgba(255, 205, 164, 0.9) 290deg,
+      transparent 295deg,
       transparent 360deg
     );
 }
