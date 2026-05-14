@@ -26,6 +26,8 @@ const signalMessage = $("#signalMessage");
 const signalThreshold = $("#signalThreshold");
 const signalThresholdValue = $("#signalThresholdValue");
 const signalSoundToggle = $("#signalSoundToggle");
+const signalSoundTestGreen = $("#signalSoundTestGreen");
+const signalSoundTestRed = $("#signalSoundTestRed");
 
 const horizons = [15, 30, 60];
 const horizonEls = {
@@ -56,8 +58,10 @@ let lastPrice = 0;
 let signalStateKey = "normal";
 let currentPredictions = [];
 let audioContext = null;
+let signalAudioReady = false;
 
 const signalSoundStorageKey = "pulse-option-signal-sound";
+const signalSoundDebug = true;
 
 const signalTitleTooltips = {
   standby: "3つの時間軸がまだ強く揃っていない待機状態です。",
@@ -112,34 +116,79 @@ function saveSignalSoundSetting() {
 
 function getAudioContext() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) return null;
-  if (!audioContext) audioContext = new AudioContextClass();
+  if (!AudioContextClass) {
+    debugSignalSound("Web Audio API is not available");
+    return null;
+  }
+  if (!audioContext) {
+    audioContext = new AudioContextClass();
+    debugSignalSound(`AudioContext created: ${audioContext.state}`);
+  }
   return audioContext;
 }
 
-function unlockSignalAudio() {
-  const context = getAudioContext();
-  if (!context || context.state !== "suspended") return;
-  context.resume().catch(() => {});
+function debugSignalSound(message) {
+  if (!signalSoundDebug) return;
+  console.info(`[Pulse Sound] ${message}`);
 }
 
-function playSignalSound(direction) {
-  if (!signalSoundToggle?.checked) return;
+async function unlockSignalAudio() {
+  const context = getAudioContext();
+  if (!context) return false;
+  try {
+    if (context.state === "suspended") {
+      await context.resume();
+      debugSignalSound(`AudioContext resumed: ${context.state}`);
+    }
+    primeSignalAudio(context);
+    signalAudioReady = context.state === "running";
+    debugSignalSound(`audio unlock ${signalAudioReady ? "ready" : context.state}`);
+    return signalAudioReady;
+  } catch (error) {
+    signalAudioReady = false;
+    debugSignalSound(`audio unlock failed: ${error?.message || error}`);
+    return false;
+  }
+}
+
+async function playSignalSound(direction, options = {}) {
+  if (!options.force && !signalSoundToggle?.checked) {
+    debugSignalSound(`skip ${direction}: disabled`);
+    return;
+  }
   const context = getAudioContext();
   if (!context) return;
   const play = () => {
     try {
       if (direction === "UP") playCatCue(context);
       if (direction === "DOWN") playDogCue(context);
+      debugSignalSound(`played ${direction} cue at ${context.state}`);
     } catch {
       // Audio feedback must never interrupt chart updates.
     }
   };
   if (context.state === "suspended") {
-    context.resume().then(play).catch(() => {});
+    try {
+      await context.resume();
+      signalAudioReady = context.state === "running";
+      debugSignalSound(`resumed before ${direction}: ${context.state}`);
+    } catch (error) {
+      debugSignalSound(`blocked ${direction}: ${error?.message || error}`);
+      return;
+    }
+  }
+  if (context.state !== "running") {
+    debugSignalSound(`skip ${direction}: context ${context.state}`);
     return;
   }
   play();
+}
+
+function primeSignalAudio(context) {
+  const gain = context.createGain();
+  gain.gain.setValueAtTime(0.0001, context.currentTime);
+  gain.connect(context.destination);
+  gain.disconnect();
 }
 
 function tone(context, { type, start, duration, from, to, volume }) {
@@ -159,14 +208,14 @@ function tone(context, { type, start, duration, from, to, volume }) {
 
 function playCatCue(context) {
   const start = context.currentTime + 0.015;
-  tone(context, { type: "sine", start, duration: 0.34, from: 520, to: 760, volume: 0.035 });
-  tone(context, { type: "triangle", start: start + 0.04, duration: 0.3, from: 760, to: 430, volume: 0.018 });
+  tone(context, { type: "sine", start, duration: 0.34, from: 520, to: 760, volume: 0.075 });
+  tone(context, { type: "triangle", start: start + 0.04, duration: 0.3, from: 760, to: 430, volume: 0.035 });
 }
 
 function playDogCue(context) {
   const start = context.currentTime + 0.015;
-  tone(context, { type: "square", start, duration: 0.12, from: 210, to: 92, volume: 0.04 });
-  tone(context, { type: "sawtooth", start: start + 0.16, duration: 0.15, from: 170, to: 78, volume: 0.034 });
+  tone(context, { type: "square", start, duration: 0.12, from: 210, to: 92, volume: 0.08 });
+  tone(context, { type: "sawtooth", start: start + 0.16, duration: 0.15, from: 170, to: 78, volume: 0.06 });
 }
 
 function resetState() {
@@ -515,6 +564,7 @@ function updateSignalState(predictions) {
     if (stateChanged) {
       predictionPanel.classList.add("signal-pulse");
       window.setTimeout(() => predictionPanel.classList.remove("signal-pulse"), 2800);
+      debugSignalSound(`state transition ${nextStateKey}, enabled=${Boolean(signalSoundToggle?.checked)}, ready=${signalAudioReady}`);
       playSignalSound(direction);
     }
     signalTitle.textContent = direction === "UP" ? "ALL GREEN" : "ALL RED";
@@ -657,6 +707,15 @@ signalThreshold.addEventListener("input", refreshSignalThreshold);
 signalSoundToggle?.addEventListener("change", () => {
   saveSignalSoundSetting();
   unlockSignalAudio();
+  debugSignalSound(`setting changed: ${signalSoundToggle.checked ? "on" : "off"}`);
+});
+signalSoundTestGreen?.addEventListener("click", async () => {
+  await unlockSignalAudio();
+  playSignalSound("UP", { force: true });
+});
+signalSoundTestRed?.addEventListener("click", async () => {
+  await unlockSignalAudio();
+  playSignalSound("DOWN", { force: true });
 });
 symbolSelect.addEventListener("change", () => {
   activeMarketEl.textContent = symbolSelect.selectedOptions[0].textContent;

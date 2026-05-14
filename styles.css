@@ -513,6 +513,20 @@ canvas {
   font-size: 12px;
 }
 
+.sound-test-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sound-test-row button {
+  height: 28px;
+  border-radius: 5px;
+  color: #cbd6df;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .prediction-panel.signal-almost,
 .prediction-panel.is-almost-ready {
   border-color: rgba(53, 210, 143, 0.34);
