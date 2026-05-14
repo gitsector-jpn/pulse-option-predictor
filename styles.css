@@ -796,6 +796,7 @@ canvas {
 }
 
 .prediction-analysis {
+  position: relative;
   display: grid;
   align-content: center;
   gap: 6px;
@@ -808,6 +809,48 @@ canvas {
   color: #cbd6df;
   font-size: 12px;
   line-height: 1.55;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  cursor: help;
+  outline: none;
+}
+
+.prediction-analysis p::after {
+  content: attr(data-fulltext);
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 45;
+  width: min(320px, calc(100vw - 32px));
+  max-height: 180px;
+  overflow: hidden;
+  padding: 10px 12px;
+  border: 1px solid rgba(95, 182, 255, 0.28);
+  border-radius: 6px;
+  background: rgba(12, 17, 21, 0.96);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.36),
+    0 0 18px rgba(95, 182, 255, 0.08);
+  color: #d9e5ed;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.prediction-analysis p:hover::after,
+.prediction-analysis p:focus::after,
+.prediction-analysis p:focus-visible::after {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .prob-bar {
@@ -1094,6 +1137,11 @@ td {
     font-size: 11px;
     line-height: 1.45;
   }
+
+  .prediction-analysis p::after {
+    right: -4px;
+    width: min(300px, calc(100vw - 44px));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1257,6 +1305,12 @@ td {
   .prediction-analysis p {
     font-size: 11px;
     line-height: 1.45;
+  }
+
+  .prediction-analysis p::after {
+    right: 0;
+    width: min(280px, calc(100vw - 36px));
+    max-height: 160px;
   }
 
   .signal-table {

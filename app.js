@@ -614,6 +614,8 @@ function renderPrediction(horizon, prediction) {
     els.bar.style.width = "0";
     els.prob.textContent = "--";
     els.analysis.textContent = "接続後に分析を表示します。";
+    els.analysis.dataset.fulltext = els.analysis.textContent;
+    els.analysis.tabIndex = 0;
     return;
   }
   els.dir.textContent = displayDirection(prediction.direction);
@@ -621,6 +623,8 @@ function renderPrediction(horizon, prediction) {
   const tier = getPredictionTier(prediction.probability);
   els.prob.textContent = tier.key === "base" ? `${prediction.probability}%` : `${prediction.probability}% · ${tier.label}`;
   els.analysis.textContent = prediction.analysis;
+  els.analysis.dataset.fulltext = prediction.analysis;
+  els.analysis.tabIndex = 0;
   if (prediction.direction === "UP") card.classList.add("up");
   if (prediction.direction === "DOWN") card.classList.add("down");
   card.classList.toggle("tier-strong", tier.key === "strong");
