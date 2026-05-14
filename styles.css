@@ -491,6 +491,28 @@ canvas {
   text-align: right;
 }
 
+.sound-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(153, 168, 181, 0.12);
+  cursor: pointer;
+}
+
+.sound-toggle input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--green);
+}
+
+.sound-toggle span {
+  color: #cbd6df;
+  font-size: 12px;
+}
+
 .prediction-panel.signal-almost,
 .prediction-panel.is-almost-ready {
   border-color: rgba(53, 210, 143, 0.34);

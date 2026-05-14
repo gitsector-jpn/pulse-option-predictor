@@ -25,6 +25,7 @@ const signalTitle = $("#signalTitle");
 const signalMessage = $("#signalMessage");
 const signalThreshold = $("#signalThreshold");
 const signalThresholdValue = $("#signalThresholdValue");
+const signalSoundToggle = $("#signalSoundToggle");
 
 const horizons = [15, 30, 60];
 const horizonEls = {
@@ -54,6 +55,9 @@ let animationId = 0;
 let lastPrice = 0;
 let signalStateKey = "normal";
 let currentPredictions = [];
+let audioContext = null;
+
+const signalSoundStorageKey = "pulse-option-signal-sound";
 
 const signalTitleTooltips = {
   standby: "3つの時間軸がまだ強く揃っていない待機状態です。",
@@ -86,6 +90,83 @@ function prepareTooltips() {
   document.querySelectorAll("[data-tooltip]").forEach((element) => {
     if (!element.hasAttribute("tabindex")) element.tabIndex = 0;
   });
+}
+
+function loadSignalSoundSetting() {
+  if (!signalSoundToggle) return;
+  try {
+    signalSoundToggle.checked = localStorage.getItem(signalSoundStorageKey) === "true";
+  } catch {
+    signalSoundToggle.checked = false;
+  }
+}
+
+function saveSignalSoundSetting() {
+  if (!signalSoundToggle) return;
+  try {
+    localStorage.setItem(signalSoundStorageKey, signalSoundToggle.checked ? "true" : "false");
+  } catch {
+    // Sound preferences are optional; ignore storage failures in private modes.
+  }
+}
+
+function getAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioContext) audioContext = new AudioContextClass();
+  return audioContext;
+}
+
+function unlockSignalAudio() {
+  const context = getAudioContext();
+  if (!context || context.state !== "suspended") return;
+  context.resume().catch(() => {});
+}
+
+function playSignalSound(direction) {
+  if (!signalSoundToggle?.checked) return;
+  const context = getAudioContext();
+  if (!context) return;
+  const play = () => {
+    try {
+      if (direction === "UP") playCatCue(context);
+      if (direction === "DOWN") playDogCue(context);
+    } catch {
+      // Audio feedback must never interrupt chart updates.
+    }
+  };
+  if (context.state === "suspended") {
+    context.resume().then(play).catch(() => {});
+    return;
+  }
+  play();
+}
+
+function tone(context, { type, start, duration, from, to, volume }) {
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(from, start);
+  oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, to), start + duration);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.025);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(start);
+  oscillator.stop(start + duration + 0.03);
+}
+
+function playCatCue(context) {
+  const start = context.currentTime + 0.015;
+  tone(context, { type: "sine", start, duration: 0.34, from: 520, to: 760, volume: 0.035 });
+  tone(context, { type: "triangle", start: start + 0.04, duration: 0.3, from: 760, to: 430, volume: 0.018 });
+}
+
+function playDogCue(context) {
+  const start = context.currentTime + 0.015;
+  tone(context, { type: "square", start, duration: 0.12, from: 210, to: 92, volume: 0.04 });
+  tone(context, { type: "sawtooth", start: start + 0.16, duration: 0.15, from: 170, to: 78, volume: 0.034 });
 }
 
 function resetState() {
@@ -434,6 +515,7 @@ function updateSignalState(predictions) {
     if (stateChanged) {
       predictionPanel.classList.add("signal-pulse");
       window.setTimeout(() => predictionPanel.classList.remove("signal-pulse"), 2800);
+      playSignalSound(direction);
     }
     signalTitle.textContent = direction === "UP" ? "ALL GREEN" : "ALL RED";
     signalTitle.dataset.tooltip = direction === "UP" ? signalTitleTooltips.green : signalTitleTooltips.red;
@@ -565,10 +647,17 @@ function loop() {
   animationId = requestAnimationFrame(loop);
 }
 
-connectButton.addEventListener("click", connect);
+connectButton.addEventListener("click", () => {
+  unlockSignalAudio();
+  connect();
+});
 resetButton.addEventListener("click", resetState);
 candleSelect.addEventListener("change", rebuildCandles);
 signalThreshold.addEventListener("input", refreshSignalThreshold);
+signalSoundToggle?.addEventListener("change", () => {
+  saveSignalSoundSetting();
+  unlockSignalAudio();
+});
 symbolSelect.addEventListener("change", () => {
   activeMarketEl.textContent = symbolSelect.selectedOptions[0].textContent;
   if (socket) connect();
@@ -580,5 +669,6 @@ window.addEventListener("beforeunload", () => {
 });
 
 prepareTooltips();
+loadSignalSoundSetting();
 resetState();
 loop();
