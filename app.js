@@ -57,11 +57,15 @@ let animationId = 0;
 let lastPrice = 0;
 let signalStateKey = "normal";
 let currentPredictions = [];
-let audioContext = null;
 let signalAudioReady = false;
 
 const signalSoundStorageKey = "pulse-option-signal-sound";
 const signalSoundDebug = true;
+const signalSoundVolume = 0.24;
+const signalSounds = {
+  UP: createSignalAudio("sounds/cat_meow.mp3"),
+  DOWN: createSignalAudio("sounds/dog_bark.mp3"),
+};
 
 const signalTitleTooltips = {
   standby: "3つの時間軸がまだ強く揃っていない待機状態です。",
@@ -114,41 +118,32 @@ function saveSignalSoundSetting() {
   }
 }
 
-function getAudioContext() {
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) {
-    debugSignalSound("Web Audio API is not available");
-    return null;
-  }
-  if (!audioContext) {
-    audioContext = new AudioContextClass();
-    debugSignalSound(`AudioContext created: ${audioContext.state}`);
-  }
-  return audioContext;
-}
-
 function debugSignalSound(message) {
   if (!signalSoundDebug) return;
   console.info(`[Pulse Sound] ${message}`);
 }
 
+function createSignalAudio(src) {
+  if (typeof Audio === "undefined") return null;
+  const audio = new Audio(src);
+  audio.preload = "auto";
+  audio.volume = signalSoundVolume;
+  return audio;
+}
+
 async function unlockSignalAudio() {
-  const context = getAudioContext();
-  if (!context) return false;
-  try {
-    if (context.state === "suspended") {
-      await context.resume();
-      debugSignalSound(`AudioContext resumed: ${context.state}`);
-    }
-    primeSignalAudio(context);
-    signalAudioReady = context.state === "running";
-    debugSignalSound(`audio unlock ${signalAudioReady ? "ready" : context.state}`);
-    return signalAudioReady;
-  } catch (error) {
-    signalAudioReady = false;
-    debugSignalSound(`audio unlock failed: ${error?.message || error}`);
+  const sounds = Object.values(signalSounds).filter(Boolean);
+  if (!sounds.length) {
+    debugSignalSound("HTMLAudioElement is not available");
     return false;
   }
+  for (const sound of sounds) {
+    sound.load();
+    sound.volume = signalSoundVolume;
+  }
+  signalAudioReady = true;
+  debugSignalSound("audio files loaded and ready");
+  return true;
 }
 
 async function playSignalSound(direction, options = {}) {
@@ -156,66 +151,22 @@ async function playSignalSound(direction, options = {}) {
     debugSignalSound(`skip ${direction}: disabled`);
     return;
   }
-  const context = getAudioContext();
-  if (!context) return;
-  const play = () => {
-    try {
-      if (direction === "UP") playCatCue(context);
-      if (direction === "DOWN") playDogCue(context);
-      debugSignalSound(`played ${direction} cue at ${context.state}`);
-    } catch {
-      // Audio feedback must never interrupt chart updates.
-    }
-  };
-  if (context.state === "suspended") {
-    try {
-      await context.resume();
-      signalAudioReady = context.state === "running";
-      debugSignalSound(`resumed before ${direction}: ${context.state}`);
-    } catch (error) {
-      debugSignalSound(`blocked ${direction}: ${error?.message || error}`);
-      return;
-    }
-  }
-  if (context.state !== "running") {
-    debugSignalSound(`skip ${direction}: context ${context.state}`);
+  const sound = signalSounds[direction];
+  if (!sound) {
+    debugSignalSound(`skip ${direction}: sound is missing`);
     return;
   }
-  play();
-}
-
-function primeSignalAudio(context) {
-  const gain = context.createGain();
-  gain.gain.setValueAtTime(0.0001, context.currentTime);
-  gain.connect(context.destination);
-  gain.disconnect();
-}
-
-function tone(context, { type, start, duration, from, to, volume }) {
-  const oscillator = context.createOscillator();
-  const gain = context.createGain();
-  oscillator.type = type;
-  oscillator.frequency.setValueAtTime(from, start);
-  oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, to), start + duration);
-  gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(volume, start + 0.025);
-  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-  oscillator.connect(gain);
-  gain.connect(context.destination);
-  oscillator.start(start);
-  oscillator.stop(start + duration + 0.03);
-}
-
-function playCatCue(context) {
-  const start = context.currentTime + 0.015;
-  tone(context, { type: "sine", start, duration: 0.34, from: 520, to: 760, volume: 0.075 });
-  tone(context, { type: "triangle", start: start + 0.04, duration: 0.3, from: 760, to: 430, volume: 0.035 });
-}
-
-function playDogCue(context) {
-  const start = context.currentTime + 0.015;
-  tone(context, { type: "square", start, duration: 0.12, from: 210, to: 92, volume: 0.08 });
-  tone(context, { type: "sawtooth", start: start + 0.16, duration: 0.15, from: 170, to: 78, volume: 0.06 });
+  try {
+    sound.pause();
+    sound.currentTime = 0;
+    sound.volume = signalSoundVolume;
+    await sound.play();
+    signalAudioReady = true;
+    debugSignalSound(`played ${direction} file: ${sound.currentSrc || sound.src}`);
+  } catch (error) {
+    signalAudioReady = false;
+    debugSignalSound(`blocked ${direction}: ${error?.message || error}`);
+  }
 }
 
 function resetState() {
