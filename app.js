@@ -22,6 +22,8 @@ const logBody = $("#logBody");
 const accuracyEl = $("#accuracy");
 const accuracySummary = $("#accuracySummary");
 const accuracyBreakdown = $("#accuracyBreakdown");
+const sessionStatsReset = $("#sessionStatsReset");
+const lifetimeStatsReset = $("#lifetimeStatsReset");
 const predictionPanel = $(".prediction-panel");
 const signalTitle = $("#signalTitle");
 const signalMessage = $("#signalMessage");
@@ -34,6 +36,8 @@ const signalSoundTestRed = $("#signalSoundTestRed");
 const horizons = [15, 30, 60];
 const accuracyThresholds = [60, 65, 70, 80, 90];
 const accuracyMinSamples = 5;
+const statsVersion = "v1";
+const lifetimeStatsStorageKey = `pulseStats_${statsVersion}`;
 const horizonEls = {
   15: { dir: $("#dir15"), bar: $("#bar15"), prob: $("#prob15"), analysis: $("#analysis15") },
   30: { dir: $("#dir30"), bar: $("#bar30"), prob: $("#prob30"), analysis: $("#analysis30") },
@@ -64,6 +68,7 @@ let currentPredictions = [];
 let signalAudioReady = false;
 let previewTimer = 0;
 let previewActive = false;
+let lifetimeStats = createEmptyStatsStore();
 
 const signalSoundStorageKey = "pulse-option-signal-sound";
 const signalSoundDebug = true;
@@ -101,6 +106,40 @@ function formatTime(timestamp = Date.now()) {
     minute: "2-digit",
     second: "2-digit",
   }).format(timestamp);
+}
+
+function createEmptyStatsStore() {
+  return {
+    version: statsVersion,
+    updatedAt: 0,
+    buckets: {},
+  };
+}
+
+function normalizeStatsStore(store) {
+  if (!store || store.version !== statsVersion || !store.buckets) return createEmptyStatsStore();
+  return {
+    version: statsVersion,
+    updatedAt: Number(store.updatedAt) || 0,
+    buckets: store.buckets,
+  };
+}
+
+function loadLifetimeStats() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(lifetimeStatsStorageKey) || "null");
+    lifetimeStats = normalizeStatsStore(stored);
+  } catch {
+    lifetimeStats = createEmptyStatsStore();
+  }
+}
+
+function saveLifetimeStats() {
+  try {
+    localStorage.setItem(lifetimeStatsStorageKey, JSON.stringify(lifetimeStats));
+  } catch {
+    // Lifetime stats are optional; keep the live session usable if storage is blocked.
+  }
 }
 
 function setConnection(state, text) {
@@ -183,18 +222,17 @@ async function playSignalSound(direction, options = {}) {
   }
 }
 
-function resetState() {
+function resetState({ resetStats = true } = {}) {
   ticks = [];
   candles = [];
   pendingSignals = [];
-  settledSignals = [];
+  if (resetStats) settledSignals = [];
   lastPredictionAt = 0;
   lastPrice = 0;
   signalStateKey = "normal";
   currentPredictions = [];
-  logBody.textContent = "";
-  accuracyEl.textContent = "的中率 --";
-  updateAccuracyBreakdown();
+  if (resetStats) logBody.textContent = "";
+  updateAccuracy();
   lastPriceEl.textContent = "--";
   activePriceEl.textContent = "--";
   minuteChangeEl.textContent = "--";
@@ -208,7 +246,7 @@ function resetState() {
 
 function connect() {
   disconnect({ preserveStatus: true });
-  resetState();
+  resetState({ resetStats: false });
   manualDisconnect = false;
   activeConnectionId += 1;
   const connectionId = activeConnectionId;
@@ -765,6 +803,7 @@ function refreshSignalThreshold() {
 
 function settleSignals(timestamp, price) {
   const remaining = [];
+  let lifetimeStatsChanged = false;
   for (const signal of pendingSignals) {
     if (signal.direction === "WAIT") continue;
     if (timestamp < signal.expiry) {
@@ -773,9 +812,13 @@ function settleSignals(timestamp, price) {
     }
     const actual = price >= signal.entry ? "UP" : "DOWN";
     const won = actual === signal.direction;
-    settledSignals.push({ ...signal, actual, won });
-    addLogRow({ ...signal, actual, won });
+    const settledSignal = { ...signal, actual, won };
+    settledSignals.push(settledSignal);
+    addLogRow(settledSignal);
+    recordLifetimeSignal(settledSignal);
+    lifetimeStatsChanged = true;
   }
+  if (lifetimeStatsChanged) saveLifetimeStats();
   pendingSignals = remaining.slice(-240);
   settledSignals = settledSignals.slice(-300);
   updateAccuracy();
@@ -815,11 +858,80 @@ function summarizeSignals(signals) {
   };
 }
 
-function formatAccuracySummary(signals, { minSamples = accuracyMinSamples } = {}) {
-  const summary = summarizeSignals(signals);
+function createAccuracyItems() {
+  const horizonItems = horizons.map((horizon) => ({
+    label: `${horizon}秒のみ`,
+    sessionSignals: settledSignals.filter((signal) => signal.horizon === horizon),
+    key: `horizon:${horizon}`,
+  }));
+
+  const thresholdItems = accuracyThresholds.map((threshold) => ({
+    label: `${threshold}%以上`,
+    sessionSignals: settledSignals.filter((signal) => signal.probability >= threshold),
+    key: `prob:${threshold}`,
+  }));
+
+  const matrixItems = [];
+  for (const threshold of accuracyThresholds) {
+    for (const horizon of horizons) {
+      matrixItems.push({
+        label: `${horizon}秒・${threshold}%以上`,
+        sessionSignals: settledSignals.filter(
+          (signal) => signal.horizon === horizon && signal.probability >= threshold,
+        ),
+        key: `horizon:${horizon}|prob:${threshold}`,
+      });
+    }
+  }
+
+  return { horizonItems, thresholdItems, matrixItems };
+}
+
+function getStatKeys(signal) {
+  const keys = ["overall", `horizon:${signal.horizon}`];
+  for (const threshold of accuracyThresholds) {
+    if (signal.probability >= threshold) {
+      keys.push(`prob:${threshold}`, `horizon:${signal.horizon}|prob:${threshold}`);
+    }
+  }
+  return keys;
+}
+
+function recordLifetimeSignal(signal) {
+  for (const key of getStatKeys(signal)) {
+    if (!lifetimeStats.buckets[key]) lifetimeStats.buckets[key] = { wins: 0, total: 0 };
+    lifetimeStats.buckets[key].total += 1;
+    if (signal.won) lifetimeStats.buckets[key].wins += 1;
+  }
+  lifetimeStats.updatedAt = Date.now();
+}
+
+function summarizeBucket(bucket) {
+  const total = Number(bucket?.total) || 0;
+  const wins = Number(bucket?.wins) || 0;
+  return {
+    total,
+    wins,
+    rate: total ? (wins / total) * 100 : 0,
+  };
+}
+
+function hasLifetimeStats() {
+  return Object.values(lifetimeStats.buckets).some((bucket) => Number(bucket?.total) > 0);
+}
+
+function formatAccuracyValue(summary, { minSamples = accuracyMinSamples } = {}) {
   if (!summary.total) return "-- / 0件";
   if (summary.total < minSamples) return `件数不足 / ${summary.total}件`;
   return `${summary.rate.toFixed(1)}% / ${summary.total}件`;
+}
+
+function formatAccuracySummary(signals, options) {
+  return formatAccuracyValue(summarizeSignals(signals), options);
+}
+
+function formatLifetimeAccuracy(key) {
+  return formatAccuracyValue(summarizeBucket(lifetimeStats.buckets[key]));
 }
 
 function renderAccuracyGroup(title, items) {
@@ -832,7 +944,10 @@ function renderAccuracyGroup(title, items) {
             (item) => `
               <div>
                 <dt>${item.label}</dt>
-                <dd>${formatAccuracySummary(item.signals)}</dd>
+                <dd>
+                  <span><b>Session</b>${formatAccuracySummary(item.sessionSignals)}</span>
+                  <span><b>Lifetime</b>${formatLifetimeAccuracy(item.key)}</span>
+                </dd>
               </div>
             `,
           )
@@ -845,46 +960,44 @@ function renderAccuracyGroup(title, items) {
 function updateAccuracyBreakdown() {
   if (!accuracySummary || !accuracyBreakdown) return;
 
-  if (!settledSignals.length) {
+  const hasSession = settledSignals.length > 0;
+  const hasLifetime = hasLifetimeStats();
+
+  if (!hasSession && !hasLifetime) {
     accuracySummary.textContent = "データ待機中";
     accuracyBreakdown.innerHTML = `
       <section class="accuracy-group is-empty">
-        <p>検証ログが蓄積されると、条件別の的中率を表示します。</p>
+        <p>検証ログが蓄積されると、Session と Lifetime の条件別的中率を表示します。</p>
       </section>
     `;
     return;
   }
 
   const strongSignals = settledSignals.filter((signal) => signal.probability >= 65);
-  accuracySummary.textContent = `強シグナル ${formatAccuracySummary(strongSignals)}`;
+  accuracySummary.textContent = `Session ${formatAccuracySummary(strongSignals)} / Lifetime ${formatLifetimeAccuracy("prob:65")}`;
 
-  const horizonItems = horizons.map((horizon) => ({
-    label: `${horizon}秒のみ`,
-    signals: settledSignals.filter((signal) => signal.horizon === horizon),
-  }));
-
-  const thresholdItems = accuracyThresholds.map((threshold) => ({
-    label: `${threshold}%以上`,
-    signals: settledSignals.filter((signal) => signal.probability >= threshold),
-  }));
-
-  const matrixItems = [];
-  for (const threshold of accuracyThresholds) {
-    for (const horizon of horizons) {
-      matrixItems.push({
-        label: `${horizon}秒・${threshold}%以上`,
-        signals: settledSignals.filter(
-          (signal) => signal.horizon === horizon && signal.probability >= threshold,
-        ),
-      });
-    }
-  }
-
+  const { horizonItems, thresholdItems, matrixItems } = createAccuracyItems();
   accuracyBreakdown.innerHTML = [
     renderAccuracyGroup("期限別", horizonItems),
     renderAccuracyGroup("確率別", thresholdItems),
     renderAccuracyGroup("期限 × 確率", matrixItems),
   ].join("");
+}
+
+function resetSessionStats() {
+  settledSignals = [];
+  logBody.textContent = "";
+  updateAccuracy();
+}
+
+function resetLifetimeStats() {
+  lifetimeStats = createEmptyStatsStore();
+  try {
+    localStorage.removeItem(lifetimeStatsStorageKey);
+  } catch {
+    // Ignore blocked storage; the in-memory reset still applies.
+  }
+  updateAccuracyBreakdown();
 }
 
 function drawChart() {
@@ -954,6 +1067,8 @@ connectButton.addEventListener("click", () => {
   connect();
 });
 resetButton.addEventListener("click", resetState);
+sessionStatsReset?.addEventListener("click", resetSessionStats);
+lifetimeStatsReset?.addEventListener("click", resetLifetimeStats);
 candleSelect.addEventListener("change", rebuildCandles);
 signalThreshold.addEventListener("input", refreshSignalThreshold);
 signalSoundToggle?.addEventListener("change", () => {
@@ -987,5 +1102,6 @@ window.addEventListener("beforeunload", () => {
 
 prepareTooltips();
 loadSignalSoundSetting();
+loadLifetimeStats();
 resetState();
 loop();

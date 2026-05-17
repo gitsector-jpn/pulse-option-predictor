@@ -1425,6 +1425,21 @@ canvas {
   font-size: 12px;
 }
 
+.accuracy-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 14px 10px;
+}
+
+.accuracy-actions button {
+  height: 28px;
+  padding: 0 10px;
+  border-color: rgba(153, 168, 181, 0.24);
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .accuracy-breakdown {
   display: grid;
   grid-template-columns: minmax(180px, 0.8fr) minmax(180px, 0.8fr) minmax(260px, 1.4fr);
@@ -1467,11 +1482,26 @@ canvas {
 }
 
 .accuracy-group dd {
+  display: grid;
+  gap: 3px;
   margin: 0;
   color: var(--text);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.accuracy-group dd span {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.accuracy-group dd b {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .accuracy-group.is-empty {
@@ -1832,6 +1862,15 @@ td {
   .accuracy-breakdown {
     grid-template-columns: 1fr;
     padding: 0 12px 10px;
+  }
+
+  .accuracy-actions {
+    justify-content: stretch;
+    padding: 0 12px 10px;
+  }
+
+  .accuracy-actions button {
+    flex: 1;
   }
 
   .accuracy-group:nth-child(3) {
