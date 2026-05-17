@@ -38,6 +38,10 @@ const accuracyThresholds = [60, 65, 70, 80, 90];
 const accuracyMinSamples = 5;
 const statsVersion = "v1";
 const lifetimeStatsStorageKey = `pulseStats_${statsVersion}`;
+const sessionStatsLabel = "今回の稼働";
+const lifetimeStatsLabel = "累計戦績";
+const sessionStatsTooltip = "アプリ起動後から現在までの成績です。ページ更新でリセットされます。";
+const lifetimeStatsTooltip = "ブラウザへ保存された累積データです。長期的な傾向確認に使用します。";
 const horizonEls = {
   15: { dir: $("#dir15"), bar: $("#bar15"), prob: $("#prob15"), analysis: $("#analysis15") },
   30: { dir: $("#dir30"), bar: $("#bar30"), prob: $("#prob30"), analysis: $("#analysis30") },
@@ -945,8 +949,8 @@ function renderAccuracyGroup(title, items) {
               <div>
                 <dt>${item.label}</dt>
                 <dd>
-                  <span><b>Session</b>${formatAccuracySummary(item.sessionSignals)}</span>
-                  <span><b>Lifetime</b>${formatLifetimeAccuracy(item.key)}</span>
+                  <span><b data-tooltip="${sessionStatsTooltip}" tabindex="0">${sessionStatsLabel}</b>${formatAccuracySummary(item.sessionSignals)}</span>
+                  <span><b data-tooltip="${lifetimeStatsTooltip}" tabindex="0">${lifetimeStatsLabel}</b>${formatLifetimeAccuracy(item.key)}</span>
                 </dd>
               </div>
             `,
@@ -967,14 +971,14 @@ function updateAccuracyBreakdown() {
     accuracySummary.textContent = "データ待機中";
     accuracyBreakdown.innerHTML = `
       <section class="accuracy-group is-empty">
-        <p>検証ログが蓄積されると、Session と Lifetime の条件別的中率を表示します。</p>
+        <p>検証ログが蓄積されると、今回の稼働と累計戦績の条件別的中率を表示します。</p>
       </section>
     `;
     return;
   }
 
   const strongSignals = settledSignals.filter((signal) => signal.probability >= 65);
-  accuracySummary.textContent = `Session ${formatAccuracySummary(strongSignals)} / Lifetime ${formatLifetimeAccuracy("prob:65")}`;
+  accuracySummary.textContent = `${sessionStatsLabel} ${formatAccuracySummary(strongSignals)} / ${lifetimeStatsLabel} ${formatLifetimeAccuracy("prob:65")}`;
 
   const { horizonItems, thresholdItems, matrixItems } = createAccuracyItems();
   accuracyBreakdown.innerHTML = [
