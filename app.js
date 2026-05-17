@@ -20,6 +20,8 @@ const volatilityEl = $("#volatility");
 const clockEl = $("#clock");
 const logBody = $("#logBody");
 const accuracyEl = $("#accuracy");
+const accuracySummary = $("#accuracySummary");
+const accuracyBreakdown = $("#accuracyBreakdown");
 const predictionPanel = $(".prediction-panel");
 const signalTitle = $("#signalTitle");
 const signalMessage = $("#signalMessage");
@@ -30,6 +32,8 @@ const signalSoundTestGreen = $("#signalSoundTestGreen");
 const signalSoundTestRed = $("#signalSoundTestRed");
 
 const horizons = [15, 30, 60];
+const accuracyThresholds = [60, 65, 70, 80, 90];
+const accuracyMinSamples = 5;
 const horizonEls = {
   15: { dir: $("#dir15"), bar: $("#bar15"), prob: $("#prob15"), analysis: $("#analysis15") },
   30: { dir: $("#dir30"), bar: $("#bar30"), prob: $("#prob30"), analysis: $("#analysis30") },
@@ -190,6 +194,7 @@ function resetState() {
   currentPredictions = [];
   logBody.textContent = "";
   accuracyEl.textContent = "的中率 --";
+  updateAccuracyBreakdown();
   lastPriceEl.textContent = "--";
   activePriceEl.textContent = "--";
   minuteChangeEl.textContent = "--";
@@ -790,9 +795,96 @@ function addLogRow(signal) {
 }
 
 function updateAccuracy() {
-  if (!settledSignals.length) return;
+  if (!settledSignals.length) {
+    accuracyEl.textContent = "的中率 --";
+    updateAccuracyBreakdown();
+    return;
+  }
   const wins = settledSignals.filter((signal) => signal.won).length;
   accuracyEl.textContent = `的中率 ${((wins / settledSignals.length) * 100).toFixed(1)}% / ${settledSignals.length}件`;
+  updateAccuracyBreakdown();
+}
+
+function summarizeSignals(signals) {
+  const total = signals.length;
+  const wins = signals.filter((signal) => signal.won).length;
+  return {
+    total,
+    wins,
+    rate: total ? (wins / total) * 100 : 0,
+  };
+}
+
+function formatAccuracySummary(signals, { minSamples = accuracyMinSamples } = {}) {
+  const summary = summarizeSignals(signals);
+  if (!summary.total) return "-- / 0件";
+  if (summary.total < minSamples) return `件数不足 / ${summary.total}件`;
+  return `${summary.rate.toFixed(1)}% / ${summary.total}件`;
+}
+
+function renderAccuracyGroup(title, items) {
+  return `
+    <section class="accuracy-group">
+      <h3>${title}</h3>
+      <dl>
+        ${items
+          .map(
+            (item) => `
+              <div>
+                <dt>${item.label}</dt>
+                <dd>${formatAccuracySummary(item.signals)}</dd>
+              </div>
+            `,
+          )
+          .join("")}
+      </dl>
+    </section>
+  `;
+}
+
+function updateAccuracyBreakdown() {
+  if (!accuracySummary || !accuracyBreakdown) return;
+
+  if (!settledSignals.length) {
+    accuracySummary.textContent = "データ待機中";
+    accuracyBreakdown.innerHTML = `
+      <section class="accuracy-group is-empty">
+        <p>検証ログが蓄積されると、条件別の的中率を表示します。</p>
+      </section>
+    `;
+    return;
+  }
+
+  const strongSignals = settledSignals.filter((signal) => signal.probability >= 65);
+  accuracySummary.textContent = `強シグナル ${formatAccuracySummary(strongSignals)}`;
+
+  const horizonItems = horizons.map((horizon) => ({
+    label: `${horizon}秒のみ`,
+    signals: settledSignals.filter((signal) => signal.horizon === horizon),
+  }));
+
+  const thresholdItems = accuracyThresholds.map((threshold) => ({
+    label: `${threshold}%以上`,
+    signals: settledSignals.filter((signal) => signal.probability >= threshold),
+  }));
+
+  const matrixItems = [];
+  for (const threshold of accuracyThresholds) {
+    for (const horizon of horizons) {
+      matrixItems.push({
+        label: `${horizon}秒・${threshold}%以上`,
+        signals: settledSignals.filter(
+          (signal) => signal.horizon === horizon && signal.probability >= threshold,
+        ),
+      });
+    }
+  }
+
+  accuracyBreakdown.innerHTML = [
+    renderAccuracyGroup("期限別", horizonItems),
+    renderAccuracyGroup("確率別", thresholdItems),
+    renderAccuracyGroup("期限 × 確率", matrixItems),
+  ].join("");
 }
 
 function drawChart() {

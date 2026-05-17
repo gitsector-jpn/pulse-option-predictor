@@ -170,6 +170,13 @@
             <h2 data-tooltip="過去の予測と実際の結果を記録します。短期的な精度確認に使います。">検証ログ</h2>
             <span id="accuracy" class="tooltip-left" data-tooltip="検証ログ上での予測的中割合です。市場環境によって変動します。">的中率 --</span>
           </div>
+          <details class="accuracy-panel" id="accuracyPanel">
+            <summary>
+              <span>条件別集計</span>
+              <small id="accuracySummary">データ待機中</small>
+            </summary>
+            <div class="accuracy-breakdown" id="accuracyBreakdown" aria-live="polite"></div>
+          </details>
           <div class="table-wrap">
             <table>
               <thead>
